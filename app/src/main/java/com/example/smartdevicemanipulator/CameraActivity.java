@@ -21,6 +21,7 @@ public class CameraActivity extends Activity {
 
         // Find the button by its ID
         Button captureButton = findViewById(R.id.captureButton);
+        captureButton.setText("");
 
         // Set click listener for the button
         captureButton.setOnClickListener(view -> {
@@ -67,6 +68,7 @@ public class CameraActivity extends Activity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             // The image is captured, but in this example, we won't do anything with it
             // You can add code to process or display the captured image here
+
         }
     }
 }

@@ -31,6 +31,13 @@
             android:label="Camera Activity">
         </activity>
 
+        <activity
+            android:name=".MyListFragment"
+            android:exported="true"
+            android:label="Camera Activity">
+        </activity>
+
+
     </application>
 
 </manifest>
