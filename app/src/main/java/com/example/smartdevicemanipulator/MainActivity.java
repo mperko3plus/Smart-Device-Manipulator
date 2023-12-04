@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // Handle button1 click
-                Intent intent = new Intent(MainActivity.this, MyListFragment.class);
+                Intent intent = new Intent(MainActivity.this, DeviceListActivity.class);
                 startActivity(intent);
             }
         });
@@ -30,8 +30,7 @@ public class MainActivity extends AppCompatActivity {
         button2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Handle button2 click
-                // Add your code here
+
             }
         });
     }

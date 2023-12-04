@@ -4,10 +4,13 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.io.File;
 
 public class CameraActivity extends Activity {
 
@@ -19,23 +22,18 @@ public class CameraActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        // Find the button by its ID
         Button captureButton = findViewById(R.id.captureButton);
         captureButton.setText("");
 
-        // Set click listener for the button
         captureButton.setOnClickListener(view -> {
-            // Check and request camera permission
             checkAndRequestCameraPermission();
         });
     }
 
     private void checkAndRequestCameraPermission() {
         if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            // Permission is already granted, proceed with the camera capture
             dispatchTakePictureIntent();
         } else {
-            // Request camera permission from the user
             requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
         }
     }
@@ -45,10 +43,8 @@ public class CameraActivity extends Activity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, proceed with the camera capture
                 dispatchTakePictureIntent();
             } else {
-                // Permission denied
                 Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show();
             }
         }
@@ -64,11 +60,22 @@ public class CameraActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
+        Bitmap image = null;
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            // The image is captured, but in this example, we won't do anything with it
-            // You can add code to process or display the captured image here
 
+            Bundle extras = data.getExtras();
+            if (extras != null) {
+                image = (Bitmap) extras.get("data");
+            }
+
+            String selectedDevice = getIntent().getStringExtra("SELECTED_DEVICE");
+
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("SELECTED_DEVICE", selectedDevice);
+            resultIntent.putExtra("BITMAP", image);
+            setResult(RESULT_OK, resultIntent);
+            finish();
         }
     }
+
 }

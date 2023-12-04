@@ -28,14 +28,10 @@
         <activity
             android:name=".CameraActivity"
             android:exported="true"
-            android:label="Camera Activity">
-        </activity>
-
+            android:label="Camera Activity"></activity>
         <activity
-            android:name=".MyListFragment"
-            android:exported="true"
-            android:label="Camera Activity">
-        </activity>
+            android:name=".DeviceListActivity"
+            android:label="Device List Activity"></activity>
 
 
     </application>
