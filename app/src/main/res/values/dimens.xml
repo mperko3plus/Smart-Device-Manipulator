@@ -1,0 +1,5 @@
+<!-- res/values/dimens.xml -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <dimen name="bulb_size">48dp</dimen>
+    <dimen name="seekbar_height" tools:ignore="MissingDefaultResource">300dp</dimen>
+</resources>
