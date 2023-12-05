@@ -1,15 +1,21 @@
 package com.example.smartdevicemanipulator;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Display;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -25,13 +31,15 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
     private Camera mCamera;
     private SurfaceTexture mSurfaceTexture;
-
-
+    private ImageView overlayImageView;
+    private boolean conditionMet = true;
+    private boolean isTouchInProgress = false;
+    private static final long TOUCH_IGNORE_DURATION_MS = 500;
     private final long IMAGE_ANALYSIS_INTERVAL_MS = 500;
-
     private final AtomicLong lastAnalysisTimeMs = new AtomicLong(0L);
     private byte[] previewBuffer;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,8 +47,63 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         TextureView textureView = new TextureView(this);
         textureView.setSurfaceTextureListener(this);
 
-        setContentView(textureView);
+        //create icon
+        overlayImageView = new ImageView(this);
+        overlayImageView.setImageResource(android.R.drawable.ic_menu_camera);
+        overlayImageView.setVisibility(View.INVISIBLE);
+
+        //add icon to frame
+        FrameLayout frameLayout = new FrameLayout(this);
+        frameLayout.addView(textureView, 0);
+
+        // Set layout parameters for the ImageView
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
+        params.bottomMargin = 50;  // Adjust the bottom margin as needed
+
+        frameLayout.addView(overlayImageView, params);
+
+
+        overlayImageView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (isTouchInProgress) {
+                    return true; // Ignore additional touch events
+                }
+                // Set the flag to indicate that a touch event is in progress
+                isTouchInProgress = true;
+
+                int[] imageViewCoords = new int[2];
+                overlayImageView.getLocationOnScreen(imageViewCoords);
+
+                float x = event.getRawX();
+                float y = event.getRawY();
+
+                if (x >= imageViewCoords[0] && x <= imageViewCoords[0] + overlayImageView.getWidth() &&
+                        y >= imageViewCoords[1] && y <= imageViewCoords[1] + overlayImageView.getHeight()) {
+
+                    Toast.makeText(LiveCameraWalkActivity.this, "Icon Touched!", Toast.LENGTH_SHORT).show();
+                }
+                //reset flag
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        isTouchInProgress = false;
+                    }
+                }, TOUCH_IGNORE_DURATION_MS);
+
+                return true;
+            }
+        });
+
+
+        setContentView(frameLayout);  // Set the content view to the FrameLayout
     }
+
+
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
@@ -129,6 +192,8 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                         Log.i(TAG, "Frame callback!");
 
 
+                        // Show/hide the overlay icon based on the condition
+                        updateOverlayVisibility();
                     } finally {
                         mCamera.addCallbackBuffer(previewBuffer);
                     }
@@ -143,4 +208,19 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
             Log.e(TAG, "Exception starting preview", ioe);
         }
     }
+
+    private void updateOverlayVisibility() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (conditionMet) {
+                    overlayImageView.setVisibility(View.VISIBLE);
+                } else {
+                    overlayImageView.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+    }
+
+
 }
