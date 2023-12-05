@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -105,8 +106,10 @@ public class DeviceListActivity extends AppCompatActivity {
                 try (FileOutputStream fileOutputStream = new FileOutputStream(imagePath.toFile())) {
                     ((Bitmap) data.getExtras().get("BITMAP")).compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
+
+                Toast.makeText(getBaseContext(), "Success!", Toast.LENGTH_SHORT).show();
             }
 
         }
