@@ -23,7 +23,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+
+import cn.gavinliu.similar.photo.SimilarPhoto;
+import cn.gavinliu.similar.photo.entry.Photo;
+import cn.gavinliu.similar.photo.util.PhotoRepository;
 
 /**
  * More or less straight out of TextureView's doc.
@@ -41,6 +46,9 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private boolean conditionMet = true;
     private boolean isTouchInProgress = false;
     private static final long TOUCH_IGNORE_DURATION_MS = 500;
+
+    private List<Photo> photos;
+
     private final long IMAGE_ANALYSIS_INTERVAL_MS = 500;
     private final AtomicLong lastAnalysisTimeMs = new AtomicLong(0L);
     private byte[] previewBuffer;
@@ -142,6 +150,15 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         });
 
         setContentView(frameLayout);  // Set the content view to the FrameLayout
+        setContentView(textureView);
+
+        try {
+            photos = PhotoRepository.getPhoto(this);
+            SimilarPhoto.calculateFingerPrint(photos);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Log.d(TAG, "Created Walk.");
     }
 
 
@@ -229,7 +246,12 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                         }
 
                         Log.i(TAG, "Frame callback!");
-
+                        new Thread(() -> {
+                            Photo photo = SimilarPhoto.calculateFingerPrint(data);
+                            if (SimilarPhoto.matches(photos, photo)) {
+                                Log.i(TAG, "match!");
+                            }
+                        }).start();
 
                         // Show/hide the overlay icon based on the condition
                         updateOverlayVisibility();

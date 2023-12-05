@@ -13,6 +13,8 @@ import com.example.smartdevicemanipulator.client.V3Client;
 
 import java.util.concurrent.CompletableFuture;
 
+import java.io.IOException;
+
 public class MainActivity extends AppCompatActivity {
     private final V3Client v3 = V3Client.v3;
 
@@ -37,6 +39,12 @@ public class MainActivity extends AppCompatActivity {
         Button button1 = findViewById(R.id.button1);
         Button button2 = findViewById(R.id.button2);
 
+        try {
+            Image.test();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         // Set click listeners for the buttons
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,5 +62,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
     }
 }
