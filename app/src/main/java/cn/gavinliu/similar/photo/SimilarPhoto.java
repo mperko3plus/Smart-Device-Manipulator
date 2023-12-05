@@ -42,10 +42,10 @@ public class SimilarPhoto {
         }
     }
 
-    public static Photo calculateFingerPrint(byte[] photoBytes) {
+    public static Photo calculateFingerPrint(Bitmap bitmap) {
         Photo photo = new Photo();
         // TODO bitmap ispadne null, ovo ne valja
-        Bitmap bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.length);
+//        Bitmap bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.length);
 
         calcFingerPrint(photo, bitmap);
         return photo;

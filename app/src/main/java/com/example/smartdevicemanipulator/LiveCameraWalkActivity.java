@@ -2,9 +2,13 @@ package com.example.smartdevicemanipulator;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,6 +26,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -269,6 +274,22 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
             Log.e(TAG, "Exception starting preview", ioe);
         }
     }
+
+    private static Bitmap convertToBitmap(Camera mCamera, byte[] data) {
+        int width = mCamera.getParameters().getPreviewSize().width;
+        int height = mCamera.getParameters().getPreviewSize().height;
+
+        YuvImage yuv = new YuvImage(data, mCamera.getParameters().getPreviewFormat(), width, height, null);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
+
+        byte[] bytes = out.toByteArray();
+        final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+        return bitmap;
+    }
+
 
     private void updateOverlayVisibility() {
         runOnUiThread(new Runnable() {
