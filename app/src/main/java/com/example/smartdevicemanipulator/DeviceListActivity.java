@@ -13,6 +13,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.smartdevicemanipulator.client.DeviceDto;
+import com.example.smartdevicemanipulator.client.V3Client;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -24,9 +27,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class DeviceListActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 1001; // Use any unique integer value
+    private final V3Client v3 = V3Client.v3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,12 +61,14 @@ public class DeviceListActivity extends AppCompatActivity {
 
 
     private ArrayList<String> getDeviceOptions() {
-        // TODO add cloud fetch
-        ArrayList<String> devices = new ArrayList<>();
-        devices.add("Device1");
-        devices.add("Device2");
-        devices.add("Device3");
-        return devices;
+        CompletableFuture<ArrayList<String>> future = CompletableFuture.supplyAsync(() -> {
+            return v3.getDevices().stream().filter(d -> d.getName() != null && !d.getName().trim().isEmpty()).map(DeviceDto::getName).collect(Collectors.toCollection(ArrayList::new));
+        });
+        try {
+            return future.get();
+        } catch (Exception ex) {
+            return new ArrayList<>();
+        }
     }
 
     @Override
