@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.widget.Button;
 import android.widget.Toast;
@@ -68,7 +69,7 @@ public class CameraActivity extends Activity {
                 image = (Bitmap) extras.get("data");
             }
 
-            String selectedDevice = getIntent().getStringExtra("SELECTED_DEVICE");
+            Parcelable selectedDevice = getIntent().getParcelableExtra("SELECTED_DEVICE");
 
             Intent resultIntent = new Intent();
             resultIntent.putExtra("SELECTED_DEVICE", selectedDevice);
