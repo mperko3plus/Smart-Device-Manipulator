@@ -69,12 +69,12 @@ public class DeviceListActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
 
         if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
-            if (data != null) {
-                DeviceDtoParceable selectedDevice = data.getParcelableExtra("SELECTED_DEVICE");
+            if (intent != null) {
+                DeviceDtoParceable selectedDevice = intent.getParcelableExtra("SELECTED_DEVICE");
                 Log.println(Log.ASSERT, "1", "je");
                 Path appImagesRoot = getApplicationContext().getFilesDir().toPath();
                 Path allDeviceImagesPath = appImagesRoot.resolve(selectedDevice.getUuid());
@@ -104,7 +104,7 @@ public class DeviceListActivity extends AppCompatActivity {
                 }
 
                 try (FileOutputStream fileOutputStream = new FileOutputStream(imagePath.toFile())) {
-                    ((Bitmap) data.getExtras().get("BITMAP")).compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                    ((Bitmap) intent.getExtras().get("BITMAP")).compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
