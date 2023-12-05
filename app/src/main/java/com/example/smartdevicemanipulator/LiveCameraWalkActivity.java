@@ -155,7 +155,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         });
 
         setContentView(frameLayout);  // Set the content view to the FrameLayout
-        setContentView(textureView);
+//        setContentView(textureView);
 
         try {
             photos = PhotoRepository.getPhoto(this);
@@ -252,9 +252,12 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
                         Log.i(TAG, "Frame callback!");
                         new Thread(() -> {
-                            Photo photo = SimilarPhoto.calculateFingerPrint(data);
-                            if (SimilarPhoto.matches(photos, photo)) {
-                                Log.i(TAG, "match!");
+
+                            Bitmap bitmap = convertToBitmap(mCamera, data);
+                            Photo photo = SimilarPhoto.calculateFingerPrint(bitmap);
+                            SimilarPhoto.MatchResult match = SimilarPhoto.matches(photos, photo);
+                            if (match != null) {
+                                Log.i(TAG, "match! " + match.deviceUuid);
                             }
                         }).start();
 

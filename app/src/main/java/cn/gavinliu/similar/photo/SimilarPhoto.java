@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.util.Log;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,21 +20,23 @@ public class SimilarPhoto {
     private static final String TAG = SimilarPhoto.class.getSimpleName();
 
 
-    public static boolean matches(List<Photo> refPhotos, Photo currentPhoto) {
+    public static MatchResult matches(List<Photo> refPhotos, Photo currentPhoto) {
 //        calculateFingerPrint(currentPhoto);
 
         for (int i = 0; i < refPhotos.size(); i++) {
-            Photo photo = refPhotos.get(i);
+            Photo referencePhoto = refPhotos.get(i);
 
             List<Photo> temp = new ArrayList<>();
-            temp.add(photo);
+            temp.add(referencePhoto);
 
-            int dist = hamDist(photo.getFinger(), currentPhoto.getFinger());
+            // TODO probaj cosine similarity umjesto hamminga
+            int dist = hamDist(referencePhoto.getFinger(), currentPhoto.getFinger());
             if (dist < 20) {
-                return true;
+                String deviceUuid = Paths.get(referencePhoto.getPath()).getParent().getFileName().toString();
+                return new MatchResult(referencePhoto.getPath(), deviceUuid);
             }
         }
-        return false;
+        return null;
     }
 
     public static void calculateFingerPrint(List<Photo> photos) {
@@ -151,5 +154,15 @@ public class SimilarPhoto {
             result &= result - 1;
         }
         return dist;
+    }
+
+    public static class MatchResult {
+        public final String path;
+        public final String deviceUuid;
+
+        public MatchResult(String path, String deviceUuid) {
+            this.path = path;
+            this.deviceUuid = deviceUuid;
+        }
     }
 }
