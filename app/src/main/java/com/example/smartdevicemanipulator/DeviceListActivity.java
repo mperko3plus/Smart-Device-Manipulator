@@ -45,18 +45,19 @@ public class DeviceListActivity extends AppCompatActivity {
         for (DeviceDto deviceOption : deviceOptions) {
             DeviceDto deviceDto = deviceService.getDeviceByUuid(deviceOption.getUuid());
             Log.i("deviceDto", deviceDto.toString());
-            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.ON_OFF_SWITCH)) {
-                deviceService.setOnOff(deviceOption.getUuid(), false);
-                Boolean onOff = deviceService.getOnOff(deviceOption.getUuid());
+//            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.ON_OFF_SWITCH)) {
+//                deviceService.setOnOff(deviceOption.getUuid(), true);
+//                Boolean onOff = deviceService.getOnOff(deviceOption.getUuid());
+//                System.out.println(onOff);
+//            }
+//            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.RGBW_BULB)) {
+//                deviceService.setIntensity(deviceDto.getUuid(), 100);
+//                int intensity = deviceService.getIntensity(deviceDto.getUuid());
+//                System.out.println(intensity);
+//            }
+            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.DOOR)) {
+                Boolean onOff = deviceService.getOnOff(deviceOption.getUuid(), true);
                 System.out.println(onOff);
-            }
-            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.RGBW_BULB)) {
-                deviceService.setIntensity(deviceDto.getUuid(), 10);
-                int intensity = deviceService.getIntensity(deviceDto.getUuid());
-                System.out.println(intensity);
-            }
-            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.MOTION_SENSOR)) {
-                System.out.println(deviceDto);
             }
         }
 

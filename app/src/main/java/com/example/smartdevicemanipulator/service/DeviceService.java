@@ -144,22 +144,27 @@ public class DeviceService {
         fetchAndSetAttributesToDeviceAsync(deviceDto);
     }
 
-    public boolean getOnOff(String deviceUuid) {
+    public boolean getOnOff(String deviceUuid, boolean fetchAttributes) {
         DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        if (fetchAttributes) {
+            fetchAndSetAttributesToDeviceAsync(deviceDto);
+        }
         List<Attribute> attributes = deviceDto.getAttributes();
         for (Attribute attribute : attributes) {
             String attributeType = attribute.getDefinition().getAttributeType();
             String cluster = attribute.getDefinition().getCluster();
-            Boolean writable = attribute.getDefinition().getWritable();
-            if (attributeType != null && cluster != null && writable != null && attributeType.equals("BOOLEAN") && cluster.equals("com.zipato.cluster.OnOff") && writable) {
+            if (attributeType != null && cluster != null && attributeType.equals("BOOLEAN") && (cluster.equals("com.zipato.cluster.OnOff") || cluster.equals("com.zipato.cluster.Notifications"))) {
                 return Boolean.parseBoolean(attribute.getValue().getValue());
             }
         }
         throw new RuntimeException("Failed to fetch on/off state for device with uuid: " + deviceUuid);
     }
 
-    public int getIntensity(String deviceUuid) {
+    public int getIntensity(String deviceUuid, boolean fetchAttributes) {
         DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        if (fetchAttributes) {
+            fetchAndSetAttributesToDeviceAsync(deviceDto);
+        }
         List<Attribute> attributes = deviceDto.getAttributes();
         for (Attribute attribute : attributes) {
             String attributeType = attribute.getDefinition().getAttributeType();
