@@ -2,6 +2,7 @@ package com.example.smartdevicemanipulator;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,11 +105,20 @@ public class DeviceListActivity extends AppCompatActivity {
                     throw new RuntimeException(e);
                 }
 
-                try (FileOutputStream fileOutputStream = new FileOutputStream(imagePath.toFile())) {
-                    ((Bitmap) intent.getExtras().get("BITMAP")).compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                Uri bitmap = (Uri) intent.getExtras().get("BITMAP");
+                Path source = Paths.get(bitmap.getPath());
+                try {
+                    Files.move(source, imagePath);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+
+//                try (FileOutputStream fileOutputStream = new FileOutputStream(imagePath.toFile())) {
+//                    Files.move();
+//                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
 
                 Toast.makeText(getBaseContext(), "Success!", Toast.LENGTH_SHORT).show();
             }
