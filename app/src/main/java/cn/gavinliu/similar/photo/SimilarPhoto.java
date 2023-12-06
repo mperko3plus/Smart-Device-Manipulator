@@ -5,6 +5,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.util.Log;
 
+import com.example.smartdevicemanipulator.phash.PHash;
+
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +30,9 @@ public class SimilarPhoto {
             List<Photo> temp = new ArrayList<>();
             temp.add(referencePhoto);
 
-            int dist = hamDist(referencePhoto.getFinger(), currentPhoto.getFinger());
-            if (dist < 15) {
+//            int dist = hamDist(referencePhoto.getFinger(), currentPhoto.getFinger());
+            int dist = PHash.getHammingDistance(referencePhoto.getFinger2(), currentPhoto.getFinger2());
+            if (dist <= 20) {
                 String deviceUuid = Paths.get(referencePhoto.getPath()).getParent().getFileName().toString();
                 return new MatchResult(referencePhoto.getPath(), deviceUuid);
             }
@@ -49,19 +52,25 @@ public class SimilarPhoto {
         return photo;
     }
 
+//    private static void calcFingerPrint(Photo photo, Bitmap bitmap) {
+//        float scale_width, scale_height;
+//        scale_width = 8.0f / bitmap.getWidth();
+//        scale_height = 8.0f / bitmap.getHeight();
+//        Matrix matrix = new Matrix();
+//        matrix.postScale(scale_width, scale_height);
+//
+//        Bitmap scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+//        photo.setFinger(getFingerPrint(scaledBitmap));
+//
+//        bitmap.recycle();
+//        scaledBitmap.recycle();
+//    }
+
     private static void calcFingerPrint(Photo photo, Bitmap bitmap) {
-        float scale_width, scale_height;
-        scale_width = 8.0f / bitmap.getWidth();
-        scale_height = 8.0f / bitmap.getHeight();
-        Matrix matrix = new Matrix();
-        matrix.postScale(scale_width, scale_height);
-
-        Bitmap scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
-        photo.setFinger(getFingerPrint(scaledBitmap));
-
-        bitmap.recycle();
-        scaledBitmap.recycle();
+        String hash = PHash.calculateHash(bitmap);
+        photo.setFinger2(hash);
     }
+
 
     public static void calculateFingerPrint(Photo photo) {
         Bitmap bitmap = BitmapFactory.decodeFile(photo.getPath());
