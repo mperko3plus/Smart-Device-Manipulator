@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 public class DeviceListActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 1001; // Use any unique integer value
-    private final DeviceService deviceService = new DeviceService();
+    private final DeviceService deviceService = DeviceService.INSTANCE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
