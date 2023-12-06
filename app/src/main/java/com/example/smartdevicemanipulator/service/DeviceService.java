@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -79,18 +78,7 @@ public class DeviceService {
             try {
                 String response = v3.sendGetRequest("/zipato-web/v2/devices/" + uuid + "?full=true");
                 DeviceDto deviceDto = mapper.readValue(response, DeviceDto.class);
-                List<Attribute> attributes = getAttributes();
-                attributes = attributes.stream().filter(attribute -> attribute.getDevice().getUuid().equals(deviceDto.getUuid())).collect(Collectors.toList());
-                List<Attribute> attributeValues = getAttributeValues(true);
-                for (Attribute attribute : attributes) {
-                    for (Attribute attributeValue : attributeValues) {
-                        if (attributeValue.getUuid().equals(attribute.getUuid())) {
-                            attribute.setValue(attributeValue.getValue());
-                            break;
-                        }
-                    }
-                }
-                deviceDto.setAttributes(attributes);
+                fetchAndSetAttributesToDevice(deviceDto);
                 return deviceDto;
             } catch (Exception ex) {
                 Log.e("Something went wrong when fetching devices", ex.getMessage(), ex);
@@ -105,6 +93,41 @@ public class DeviceService {
         }
     }
 
+    private void fetchAndSetAttributesToDevice(DeviceDto deviceDto) throws IOException, NoSuchAlgorithmException {
+        List<Attribute> attributes = getAttributes();
+        attributes = attributes.stream().filter(attribute -> attribute.getDevice().getUuid().equals(deviceDto.getUuid())).collect(Collectors.toList());
+        List<Attribute> attributeValues = getAttributeValues(true);
+        for (Attribute attribute : attributes) {
+            for (Attribute attributeValue : attributeValues) {
+                if (attributeValue.getUuid().equals(attribute.getUuid())) {
+                    attribute.setValue(attributeValue.getValue());
+                    break;
+                }
+            }
+        }
+        deviceDto.setAttributes(attributes);
+    }
+
+    private void fetchAndSetAttributesToDeviceAsync(DeviceDto deviceDto) {
+        CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+            try {
+                fetchAndSetAttributesToDevice(deviceDto);
+                return true;
+            } catch (Exception ex) {
+                Log.e("Failed to fetch and set attributes for device with uuid: " + deviceDto.getUuid(), ex.getMessage(), ex);
+                return false;
+            }
+        });
+        try {
+            Boolean success = future.get();
+            if (!success) {
+                Log.e("Device attribute fail", "Failed to set attributes to device with uuid" + deviceDto.getUuid());
+            }
+        } catch (Exception ex) {
+            Log.e("Failed to fetch and set attributes for device with uuid: " + deviceDto.getUuid(), ex.getMessage(), ex);
+        }
+    }
+
     public void setOnOff(String deviceUuid, boolean on) {
         DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
         List<Attribute> attributes = deviceDto.getAttributes();
@@ -115,8 +138,10 @@ public class DeviceService {
             Boolean writable = attribute.getDefinition().getWritable();
             if (attr != null && attributeType != null && cluster != null && writable != null && attr.equals("state") && attributeType.equals("BOOLEAN") && cluster.equals("com.zipato.cluster.OnOff") && writable) {
                 setAttribute(attribute.getUuid(), new AttributeValueDto(on ? "true" : "false", null, null, null));
+                break;
             }
         }
+        fetchAndSetAttributesToDeviceAsync(deviceDto);
     }
 
     public boolean getOnOff(String deviceUuid) {
@@ -156,8 +181,10 @@ public class DeviceService {
             Boolean writable = attribute.getDefinition().getWritable();
             if (attributeType != null && cluster != null && writable != null && attributeType.equals("NUMBER") && cluster.equals("com.zipato.cluster.LevelControl") && writable) {
                 setAttribute(attribute.getUuid(), new AttributeValueDto(String.valueOf(intensity), null, null, null));
+                break;
             }
         }
+        fetchAndSetAttributesToDeviceAsync(deviceDto);
     }
 
     public RestObject synchronize() throws IOException, NoSuchAlgorithmException {
