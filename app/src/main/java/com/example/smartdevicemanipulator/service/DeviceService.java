@@ -72,6 +72,12 @@ public class DeviceService {
         return deviceDataByUuid.computeIfAbsent(uuid, this::fetchDeviceByUuid);
     }
 
+    public DeviceDto getDeviceByUuidAndUpdateAttributes(String uuid) {
+        DeviceDto deviceDto = deviceDataByUuid.computeIfAbsent(uuid, this::fetchDeviceByUuid);
+        fetchAndSetAttributesToDeviceAsync(deviceDto);
+        return deviceDto;
+    }
+
     private DeviceDto fetchDeviceByUuid(String uuid) {
         Log.i("DeviceService", "Fetching device by uuid: " + uuid);
         CompletableFuture<DeviceDto> deviceFuture = CompletableFuture.supplyAsync(() -> {
@@ -163,37 +169,76 @@ public class DeviceService {
         }
     }
 
-    public boolean getOnOff(String deviceUuid, boolean fetchAttributes) {
+    public boolean getOnOff(String deviceUuid, boolean fetchAttribute) {
         DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
-        if (fetchAttributes) {
-            fetchAndSetAttributesToDeviceAsync(deviceDto);
-        }
         List<Attribute> attributes = deviceDto.getAttributes();
         for (Attribute attribute : attributes) {
+            String attributeName = attribute.getName();
             String attributeType = attribute.getDefinition().getAttributeType();
-            String cluster = attribute.getDefinition().getCluster();
-            if (attributeType != null && cluster != null && attributeType.equals("BOOLEAN") && (cluster.equals("com.zipato.cluster.OnOff") || cluster.equals("com.zipato.cluster.Notifications"))) {
+            if (attributeType != null && attributeName != null && attributeType.equals("BOOLEAN") && attributeName.equals("STATE")) {
+                if (fetchAttribute) {
+                    AttributeValueDto attributeValueDto = fetchAttributeValueByUuidAsync(attribute.getUuid());
+                    attribute.setValue(attributeValueDto);
+                }
                 return Boolean.parseBoolean(attribute.getValue().getValue());
             }
         }
         throw new RuntimeException("Failed to fetch on/off state for device with uuid: " + deviceUuid);
     }
 
-    public int getIntensity(String deviceUuid, boolean fetchAttributes) {
+    public int getIntensity(String deviceUuid, boolean fetchAttribute) {
         DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
-        if (fetchAttributes) {
+        if (fetchAttribute) {
             fetchAndSetAttributesToDeviceAsync(deviceDto);
         }
         List<Attribute> attributes = deviceDto.getAttributes();
         for (Attribute attribute : attributes) {
+            String attributeName = attribute.getName();
             String attributeType = attribute.getDefinition().getAttributeType();
-            String cluster = attribute.getDefinition().getCluster();
             Boolean writable = attribute.getDefinition().getWritable();
-            if (attributeType != null && cluster != null && writable != null && attributeType.equals("NUMBER") && cluster.equals("com.zipato.cluster.LevelControl") && writable) {
+            if (attributeType != null && attributeName != null && writable != null && attributeType.equals("DOUBLE") && attributeName.equals("INTENSITY") && writable) {
+                if (fetchAttribute) {
+                    AttributeValueDto attributeValueDto = fetchAttributeValueByUuidAsync(attribute.getUuid());
+                    attribute.setValue(attributeValueDto);
+                }
                 return Integer.parseInt(attribute.getValue().getValue());
             }
         }
         throw new RuntimeException("Failed to fetch intensity state for device with uuid: " + deviceUuid);
+    }
+
+    public double getTemperature(String deviceUuid, boolean fetchAttribute) {
+        DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        List<Attribute> attributes = deviceDto.getAttributes();
+        for (Attribute attribute : attributes) {
+            String attributeName = attribute.getName();
+            String attributeType = attribute.getDefinition().getAttributeType();
+            if (attributeType != null && attributeName != null && attributeType.equals("DOUBLE") && attributeName.equals("TEMPERATURE")) {
+                if (fetchAttribute) {
+                    AttributeValueDto attributeValueDto = fetchAttributeValueByUuidAsync(attribute.getUuid());
+                    attribute.setValue(attributeValueDto);
+                }
+                return Double.parseDouble(attribute.getValue() != null ? attribute.getValue().getValue() : "0");
+            }
+        }
+        throw new RuntimeException("Failed to fetch intensity state for device with uuid: " + deviceUuid);
+    }
+
+    private AttributeValueDto fetchAttributeValueByUuidAsync(String attributeUuid) {
+        try {
+            CompletableFuture<AttributeValueDto> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return getAttributeValue(attributeUuid);
+                } catch (Exception ex) {
+                    Log.e("Failed to fetch attribute value", ex.getMessage(), ex);
+                    return null;
+                }
+            });
+            return future.get();
+        } catch (Exception ex) {
+            Log.e("Failed to fetch attribute value future", ex.getMessage(), ex);
+            return null;
+        }
     }
 
     public void setIntensity(String deviceUuid, int intensity) {

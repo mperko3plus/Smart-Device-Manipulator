@@ -42,25 +42,25 @@ public class DeviceListActivity extends AppCompatActivity {
 
         ArrayList<DeviceDto> deviceOptions = getDeviceOptions();
 
-        for (DeviceDto deviceOption : deviceOptions) {
-            DeviceDto deviceDto = deviceService.getDeviceByUuid(deviceOption.getUuid());
-            Log.i("deviceDto", deviceDto.toString());
+//        for (DeviceDto deviceOption : deviceOptions) {
+//            DeviceDto deviceDto = deviceService.getDeviceByUuid(deviceOption.getUuid());
+//            Log.i("deviceDto", deviceDto.toString());
 //            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.ON_OFF_SWITCH)) {
 //                deviceService.setOnOff(deviceOption.getUuid(), true);
 //                Boolean onOff = deviceService.getOnOff(deviceOption.getUuid());
 //                System.out.println(onOff);
 //            }
-            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.RGBW_BULB)) {
-                deviceService.setIntensity(deviceDto.getUuid(), 100);
-                System.out.println(deviceDto);
+//            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.RGBW_BULB)) {
+//                deviceService.setIntensity(deviceDto.getUuid(), 100);
+//                System.out.println(deviceDto);
 //                int intensity = deviceService.getIntensity(deviceDto.getUuid());
 //                System.out.println(intensity);
-            }
+//            }
 //            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.DOOR)) {
 //                Boolean onOff = deviceService.getOnOff(deviceOption.getUuid(), true);
 //                System.out.println(onOff);
 //            }
-        }
+//        }
 
 //        deviceService.setAttribute("efdeabd0-120f-4fa6-8376-30f0c9c6f9b6", new AttributeValueDto(System.currentTimeMillis() % 2 == 0 ? "false" : "true", null, null, null));
 

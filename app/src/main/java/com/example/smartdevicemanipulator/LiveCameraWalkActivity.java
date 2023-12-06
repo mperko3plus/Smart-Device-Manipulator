@@ -25,6 +25,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.smartdevicemanipulator.client.DeviceDto;
+import com.example.smartdevicemanipulator.service.DeviceService;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -47,6 +50,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private ImageView overlayImageView;
     private boolean isBulbOn = true;
     private ImageView bulbImageView;
+    private VerticalSeekBar verticalSeekBar;
     private boolean conditionMet = true;
     private boolean isTouchInProgress = false;
     private static final long TOUCH_IGNORE_DURATION_MS = 500;
@@ -55,14 +59,17 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
     private final long IMAGE_ANALYSIS_INTERVAL_MS = 500;
     private final AtomicLong lastAnalysisTimeMs = new AtomicLong(0L);
+    private final DeviceService deviceService = DeviceService.INSTANCE;
     private byte[] previewBuffer;
+    private TextureView textureView;
+    private TextView temperatureTextView;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        TextureView textureView = new TextureView(this);
+        this.textureView = new TextureView(this);
         textureView.setSurfaceTextureListener(this);
 
         overlayImageView = new ImageView(this);
@@ -80,10 +87,10 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         });
 
         // Create temperature TextView
-        TextView temperatureTextView = new TextView(this);
-        temperatureTextView.setTextSize(16);
-        temperatureTextView.setTextColor(Color.WHITE);
-        temperatureTextView.setText("Temperature: 20°C");  // Initial hardcoded temperature
+        this.temperatureTextView = new TextView(this);
+        this.temperatureTextView.setTextSize(16);
+        this.temperatureTextView.setTextColor(Color.WHITE);
+        this.temperatureTextView.setVisibility(View.INVISIBLE);
 
         // Add views to frame layout
         FrameLayout frameLayout = new FrameLayout(this);
@@ -99,6 +106,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         bulbParams.height = (int) (2 * getResources().getDimension(R.dimen.bulb_size));
 
         bulbImageView.setLayoutParams(bulbParams);
+        bulbImageView.setVisibility(View.INVISIBLE);
         frameLayout.addView(bulbImageView, 1);
 
         // Set layout parameters for the temperatureTextView (top right corner)
@@ -107,11 +115,11 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         temperatureParams.topMargin = 20;
         temperatureParams.rightMargin = 20;
 
-        temperatureTextView.setLayoutParams(temperatureParams);
-        frameLayout.addView(temperatureTextView, 2);
+        this.temperatureTextView.setLayoutParams(temperatureParams);
+        frameLayout.addView(this.temperatureTextView, 2);
 
-        VerticalSeekBar verticalSeekBar = new VerticalSeekBar(this);
-        verticalSeekBar.setVisibility(View.VISIBLE);
+        this.verticalSeekBar = new VerticalSeekBar(this);
+        this.verticalSeekBar.setVisibility(View.INVISIBLE);
 
         FrameLayout.LayoutParams seekBarParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, (int) getResources().getDimension(R.dimen.seekbar_height));
         seekBarParams.gravity = Gravity.START | Gravity.CENTER_VERTICAL;
@@ -256,6 +264,21 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                             SimilarPhoto.MatchResult match = SimilarPhoto.matches(photos, photo);
                             if (match != null) {
                                 Log.i(TAG, "matched frame to device! " + match.deviceUuid);
+                                String deviceUuid = match.deviceUuid;
+                                runOnUiThread(() -> {
+                                    DeviceDto deviceByUuid = deviceService.getDeviceByUuidAndUpdateAttributes(deviceUuid);
+                                    switch (deviceByUuid.getIcon().getName()) {
+                                        case DOOR:
+                                            setTemperature(deviceByUuid.getName(), deviceService.getTemperature(deviceUuid, true));
+                                            setBulb(deviceService.getOnOff(deviceUuid, true));
+                                            break;
+                                        case ON_OFF_SWITCH:
+                                            setBulb(deviceService.getOnOff(deviceUuid, true));
+                                            break;
+                                        case RGBW_BULB:
+                                            setIntensity(deviceByUuid.getName(), deviceService.getIntensity(deviceUuid, true));
+                                    }
+                                });
                             }
                         }).start();
 
@@ -306,12 +329,28 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
     }
 
+    private void setTemperature(String deviceName, double temperature) {
+        temperatureTextView.setText(deviceName + " temperature is: " + temperature + " degrees");
+        temperatureTextView.setVisibility(View.VISIBLE);
+    }
+
+    private void setIntensity(String deviceName, int intensity) {
+        verticalSeekBar.setProgress(intensity);
+        verticalSeekBar.setVisibility(View.VISIBLE);
+    }
+
     private void toggleBulb() {
         if (isBulbOn) {
             bulbImageView.setImageResource(R.drawable.lightbulbsolid); // Change to your bulb on icon
         } else {
             bulbImageView.setImageResource(R.drawable.lightbulbregular); // Change to your bulb off icon
         }
+        bulbImageView.setVisibility(View.VISIBLE);
+    }
+
+    private void setBulb(boolean state) {
+        this.isBulbOn = state;
+        toggleBulb();
     }
 
 }
