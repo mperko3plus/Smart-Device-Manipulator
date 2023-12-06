@@ -2,6 +2,7 @@ package com.example.smartdevicemanipulator;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -12,6 +13,7 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
@@ -256,6 +258,8 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                             SimilarPhoto.MatchResult match = SimilarPhoto.matches(photos, photo);
                             if (match != null) {
                                 Log.i(TAG, "matched frame to device! " + match.deviceUuid);
+                                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                                v.vibrate(400);
                             }
                         }).start();
 

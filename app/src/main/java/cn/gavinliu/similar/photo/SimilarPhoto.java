@@ -29,7 +29,7 @@ public class SimilarPhoto {
             temp.add(referencePhoto);
 
             int dist = hamDist(referencePhoto.getFinger(), currentPhoto.getFinger());
-            if (dist < 15) {
+            if (dist < 7) {
                 String deviceUuid = Paths.get(referencePhoto.getPath()).getParent().getFileName().toString();
                 return new MatchResult(referencePhoto.getPath(), deviceUuid);
             }
@@ -51,8 +51,8 @@ public class SimilarPhoto {
 
     private static void calcFingerPrint(Photo photo, Bitmap bitmap) {
         float scale_width, scale_height;
-        scale_width = 8.0f / bitmap.getWidth();
-        scale_height = 8.0f / bitmap.getHeight();
+        scale_width = 20.0f / bitmap.getWidth();
+        scale_height = 12.0f / bitmap.getHeight();
         Matrix matrix = new Matrix();
         matrix.postScale(scale_width, scale_height);
 
@@ -75,10 +75,12 @@ public class SimilarPhoto {
     }
 
     private static long getFingerPrint(double[][] pixels, double avg) {
-        int width = pixels[0].length;
-        int height = pixels.length;
+        int height = pixels[0].length;
+        int width = pixels.length;
 
-        byte[] bytes = new byte[height * width];
+        int size = height * width;
+
+        byte[] bytes = new byte[size];
 
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -98,20 +100,20 @@ public class SimilarPhoto {
 
         long fingerprint1 = 0;
         long fingerprint2 = 0;
-        for (int i = 0; i < 64; i++) {
-            if (i < 32) {
-                fingerprint1 += (bytes[63 - i] << i);
+        for (int i = 0; i < size; i++) {
+            if (i < size / 2) {
+                fingerprint1 += (bytes[size - 1 - i] << i);
             } else {
-                fingerprint2 += (bytes[63 - i] << (i - 31));
+                fingerprint2 += (bytes[size - 1 - i] << (i - (size / 2) - 1));
             }
         }
 
-        return (fingerprint2 << 32) + fingerprint1;
+        return (fingerprint2 << (size / 2)) + fingerprint1;
     }
 
     private static double getGrayAvg(double[][] pixels) {
-        int width = pixels[0].length;
-        int height = pixels.length;
+        int height = pixels[0].length;
+        int width = pixels.length;
         int count = 0;
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
@@ -123,9 +125,9 @@ public class SimilarPhoto {
 
 
     private static double[][] getGrayPixels(Bitmap bitmap) {
-        int width = 8;
-        int height = 8;
-        double[][] pixels = new double[height][width];
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        double[][] pixels = new double[width][height];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 pixels[i][j] = computeGrayValue(bitmap.getPixel(i, j));
