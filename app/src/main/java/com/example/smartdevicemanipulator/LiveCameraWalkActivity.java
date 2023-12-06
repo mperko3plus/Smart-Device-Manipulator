@@ -22,7 +22,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -252,12 +251,11 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
                         Log.i(TAG, "Frame callback!");
                         new Thread(() -> {
-
                             Bitmap bitmap = convertToBitmap(mCamera, data);
                             Photo photo = SimilarPhoto.calculateFingerPrint(bitmap);
                             SimilarPhoto.MatchResult match = SimilarPhoto.matches(photos, photo);
                             if (match != null) {
-                                Log.i(TAG, "match! " + match.deviceUuid);
+                                Log.i(TAG, "matched frame to device! " + match.deviceUuid);
                             }
                         }).start();
 

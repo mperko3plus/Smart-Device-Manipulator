@@ -21,7 +21,6 @@ public class SimilarPhoto {
 
 
     public static MatchResult matches(List<Photo> refPhotos, Photo currentPhoto) {
-//        calculateFingerPrint(currentPhoto);
 
         for (int i = 0; i < refPhotos.size(); i++) {
             Photo referencePhoto = refPhotos.get(i);
@@ -29,9 +28,8 @@ public class SimilarPhoto {
             List<Photo> temp = new ArrayList<>();
             temp.add(referencePhoto);
 
-            // TODO probaj cosine similarity umjesto hamminga
             int dist = hamDist(referencePhoto.getFinger(), currentPhoto.getFinger());
-            if (dist < 20) {
+            if (dist < 15) {
                 String deviceUuid = Paths.get(referencePhoto.getPath()).getParent().getFileName().toString();
                 return new MatchResult(referencePhoto.getPath(), deviceUuid);
             }
@@ -47,9 +45,6 @@ public class SimilarPhoto {
 
     public static Photo calculateFingerPrint(Bitmap bitmap) {
         Photo photo = new Photo();
-        // TODO bitmap ispadne null, ovo ne valja
-//        Bitmap bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.length);
-
         calcFingerPrint(photo, bitmap);
         return photo;
     }

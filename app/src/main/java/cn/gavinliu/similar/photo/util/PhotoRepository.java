@@ -31,28 +31,6 @@ public class PhotoRepository {
     };
 
     public static List<Photo> getPhoto(Context context) throws IOException {
-//        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-//        ContentResolver contentResolver = context.getContentResolver();
-//        String sortOrder = MediaStore.Images.Media.DATE_TAKEN + " desc";
-//        Cursor cursor = contentResolver.query(uri, STORE_IMAGES, null, null, sortOrder);
-//
-//        List<Photo> result = new ArrayList<>();
-//
-//        while (cursor != null && cursor.moveToNext()) {
-//            Photo photo = new Photo();
-//
-//            photo.setId(cursor.getLong(0));
-//            photo.setPath(cursor.getString(1));
-//            photo.setName(cursor.getString(2));
-////            photo.setMimetype(cursor.getString(3));
-//            photo.setSize(cursor.getLong(4));
-//
-//            result.add(photo);
-//        }
-//
-//        if (cursor != null) cursor.close();
-//
-//        Log.d(TAG, "getPhoto: size=" + result.size());
         var result = new ArrayList<Photo>();
         Path appImagesRoot = context.getFilesDir().toPath();
         Files.walkFileTree(appImagesRoot, new SimpleFileVisitor<>() {
