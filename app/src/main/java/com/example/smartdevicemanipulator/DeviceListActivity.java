@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 public class DeviceListActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 1001; // Use any unique integer value
-    private final DeviceService deviceService = new DeviceService();
+    private final DeviceService deviceService = DeviceService.INSTANCE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,18 +38,6 @@ public class DeviceListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_device_list);
 
         ArrayList<DeviceDto> deviceOptions = getDeviceOptions();
-
-        for (DeviceDto deviceOption : deviceOptions) {
-            DeviceDto deviceDto = deviceService.getDeviceByUuid(deviceOption.getUuid());
-            Log.i("deviceDto", deviceDto.toString());
-            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.ON_OFF_SWITCH)) {
-                deviceService.setOnOff(deviceOption.getUuid(), true);
-                Boolean onOff = deviceService.getOnOff(deviceOption.getUuid());
-                System.out.println(onOff);
-            }
-        }
-
-//        deviceService.setAttribute("efdeabd0-120f-4fa6-8376-30f0c9c6f9b6", new AttributeValueDto(System.currentTimeMillis() % 2 == 0 ? "false" : "true", null, null, null));
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, deviceOptions.stream().map(DeviceDto::getName).collect(Collectors.toList()));
 

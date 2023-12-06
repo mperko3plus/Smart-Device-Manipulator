@@ -15,7 +15,7 @@ import com.example.smartdevicemanipulator.service.DeviceService;
 import java.util.concurrent.CompletableFuture;
 
 public class MainActivity extends AppCompatActivity {
-    private final DeviceService deviceService = new DeviceService();
+    private final DeviceService deviceService = DeviceService.INSTANCE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

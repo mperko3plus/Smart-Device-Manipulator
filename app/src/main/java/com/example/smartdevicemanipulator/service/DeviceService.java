@@ -15,13 +15,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class DeviceService {
 
-    public DeviceService() {
+    // I am aware that this is bad.
+    public static DeviceService INSTANCE = new DeviceService();
+
+    private final ConcurrentHashMap<String, DeviceDto> deviceDataByUuid = new ConcurrentHashMap<>();
+
+    private DeviceService() {
     }
 
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -63,6 +70,11 @@ public class DeviceService {
     }
 
     public DeviceDto getDeviceByUuid(String uuid) {
+        return deviceDataByUuid.computeIfAbsent(uuid, this::fetchDeviceByUuid);
+    }
+
+    private DeviceDto fetchDeviceByUuid(String uuid) {
+        Log.i("DeviceService", "Fetching device by uuid: " + uuid);
         CompletableFuture<DeviceDto> deviceFuture = CompletableFuture.supplyAsync(() -> {
             try {
                 String response = v3.sendGetRequest("/zipato-web/v2/devices/" + uuid + "?full=true");
