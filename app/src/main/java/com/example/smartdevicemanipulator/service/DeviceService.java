@@ -111,20 +111,42 @@ public class DeviceService {
         DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
         List<Attribute> attributes = deviceDto.getAttributes();
         for (Attribute attribute : attributes) {
-            String attr = attribute.getDefinition().getAttribute();
             String attributeType = attribute.getDefinition().getAttributeType();
             String cluster = attribute.getDefinition().getCluster();
             Boolean writable = attribute.getDefinition().getWritable();
-            if (attr != null && attributeType != null && cluster != null && writable != null && attr.equals("state") && attributeType.equals("BOOLEAN") && cluster.equals("com.zipato.cluster.OnOff") && writable) {
+            if (attributeType != null && cluster != null && writable != null && attributeType.equals("BOOLEAN") && cluster.equals("com.zipato.cluster.OnOff") && writable) {
                 return Boolean.parseBoolean(attribute.getValue().getValue());
             }
         }
         throw new RuntimeException("Failed to fetch on/off state for device with uuid: " + deviceUuid);
     }
 
-//    public double getMeterValue(String deviceUuid) {
-//
-//    }
+    public int getIntensity(String deviceUuid) {
+        DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        List<Attribute> attributes = deviceDto.getAttributes();
+        for (Attribute attribute : attributes) {
+            String attributeType = attribute.getDefinition().getAttributeType();
+            String cluster = attribute.getDefinition().getCluster();
+            Boolean writable = attribute.getDefinition().getWritable();
+            if (attributeType != null && cluster != null && writable != null && attributeType.equals("NUMBER") && cluster.equals("com.zipato.cluster.LevelControl") && writable) {
+                return Integer.parseInt(attribute.getValue().getValue());
+            }
+        }
+        throw new RuntimeException("Failed to fetch intensity state for device with uuid: " + deviceUuid);
+    }
+
+    public void setIntensity(String deviceUuid, int intensity) {
+        DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        List<Attribute> attributes = deviceDto.getAttributes();
+        for (Attribute attribute : attributes) {
+            String attributeType = attribute.getDefinition().getAttributeType();
+            String cluster = attribute.getDefinition().getCluster();
+            Boolean writable = attribute.getDefinition().getWritable();
+            if (attributeType != null && cluster != null && writable != null && attributeType.equals("NUMBER") && cluster.equals("com.zipato.cluster.LevelControl") && writable) {
+                setAttribute(attribute.getUuid(), new AttributeValueDto(String.valueOf(intensity), null, null, null));
+            }
+        }
+    }
 
     public RestObject synchronize() throws IOException, NoSuchAlgorithmException {
         String response = v3.sendGetRequest("/zipato-web/v2/box/synchronize?ifNeeded=false&wait=true&timeout=180&_dc=1701702072041");
@@ -154,7 +176,7 @@ public class DeviceService {
         return mapper.readValue(response, AttributeValueDto.class);
     }
 
-    public void setAttribute(String attributeUuid, AttributeValueDto attributeValue) {
+    private void setAttribute(String attributeUuid, AttributeValueDto attributeValue) {
         CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
             try {
                 String body = mapper.writeValueAsString(attributeValue);
