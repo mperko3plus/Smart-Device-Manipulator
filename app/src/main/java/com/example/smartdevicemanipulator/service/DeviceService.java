@@ -9,6 +9,7 @@ import com.example.smartdevicemanipulator.client.RestObject;
 import com.example.smartdevicemanipulator.client.ResultRest;
 import com.example.smartdevicemanipulator.client.SystemWebDto;
 import com.example.smartdevicemanipulator.client.V3Client;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -28,9 +29,11 @@ public class DeviceService {
     private final ConcurrentHashMap<String, DeviceDto> deviceDataByUuid = new ConcurrentHashMap<>();
 
     private DeviceService() {
+        mapper = new ObjectMapper();
+        mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
     }
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
     private final V3Client v3 = V3Client.v3;
 
     public void selectSystem(String uuid) {
@@ -102,7 +105,7 @@ public class DeviceService {
     private void fetchAndSetAttributesToDevice(DeviceDto deviceDto) throws IOException, NoSuchAlgorithmException {
         List<Attribute> attributes = getAttributes();
         attributes = attributes.stream().filter(attribute -> attribute.getDevice().getUuid().equals(deviceDto.getUuid())).collect(Collectors.toList());
-        List<Attribute> attributeValues = getAttributeValues(true);
+        List<Attribute> attributeValues = getAttributeValues(false);
         for (Attribute attribute : attributes) {
             for (Attribute attributeValue : attributeValues) {
                 if (attributeValue.getUuid().equals(attribute.getUuid())) {
@@ -134,7 +137,7 @@ public class DeviceService {
         }
     }
 
-    public void setOnOff(String deviceUuid, boolean on) {
+    public boolean setOnOff(String deviceUuid, boolean on) {
         DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
         List<Attribute> attributes = deviceDto.getAttributes();
         for (Attribute attribute : attributes) {
@@ -145,9 +148,10 @@ public class DeviceService {
             if (attr != null && attributeType != null && cluster != null && writable != null && attr.equals("state") && attributeType.equals("BOOLEAN") && cluster.equals("com.zipato.cluster.OnOff") && writable) {
                 setAttribute(attribute.getUuid(), new AttributeValueDto(on ? "true" : "false", null, null, null));
                 setAttributeUpdatedAsync(attribute);
-                break;
+                return true;
             }
         }
+        return false;
 //        fetchAndSetAttributesToDeviceAsync(deviceDto);
     }
 
@@ -196,7 +200,7 @@ public class DeviceService {
             String attributeName = attribute.getName();
             String attributeType = attribute.getDefinition().getAttributeType();
             Boolean writable = attribute.getDefinition().getWritable();
-            if (attributeType != null && attributeName != null && writable != null && attributeType.equals("DOUBLE") && attributeName.equals("INTENSITY") && writable) {
+            if (attributeType != null && attributeName != null && writable != null && attributeType.equals("NUMBER") && attributeName.equals("INTENSITY") && writable) {
                 if (fetchAttribute) {
                     AttributeValueDto attributeValueDto = fetchAttributeValueByUuidAsync(attribute.getUuid());
                     attribute.setValue(attributeValueDto);
@@ -303,6 +307,9 @@ public class DeviceService {
 
     public AttributeValueDto getAttributeValue(String attributeUuid) throws IOException, NoSuchAlgorithmException {
         String response = v3.sendGetRequest("/zipato-web/v2/attributes/" + attributeUuid + "/value");
+        if (response == null || response.isEmpty()) {
+            return null;
+        }
         return mapper.readValue(response, AttributeValueDto.class);
     }
 
