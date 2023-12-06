@@ -200,6 +200,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                 deviceService.setIntensity(getMatchedDevice().getUuid(), intensity);
                 setMatchedDevice(deviceService.getDeviceByUuidAndUpdateAttributes(getMatchedDevice().getUuid()));
                 int newIntensity = deviceService.getIntensity(getMatchedDevice().getUuid(), false);
+                Log.i("waddup pg " + newIntensity, VerticalSeekBar.getStackTraceString(new Exception()));
                 runOnUiThread(() -> verticalSeekBar.setProgress(newIntensity));
             });
         });

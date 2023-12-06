@@ -29,12 +29,13 @@ public class VerticalSeekBar extends androidx.appcompat.widget.AppCompatSeekBar 
         super.onSizeChanged(h, w, oldh, oldw);
     }
 
-   @Override
-   public synchronized void setProgress(int progress)  // it is necessary for calling setProgress on click of a button
-   {
-    super.setProgress(progress);
-    onSizeChanged(getWidth(), getHeight(), 0, 0); 
-   }
+    @Override
+    public synchronized void setProgress(int progress)  // it is necessary for calling setProgress on click of a button
+    {
+        super.setProgress(progress);
+        onSizeChanged(getWidth(), getHeight(), 0, 0);
+    }
+
     @Override
     protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(heightMeasureSpec, widthMeasureSpec);
@@ -51,7 +52,6 @@ public class VerticalSeekBar extends androidx.appcompat.widget.AppCompatSeekBar 
     public void addBarListener(Runnable task) {
         this.task = task;
     }
-
 
 
     @Override
@@ -75,14 +75,13 @@ public class VerticalSeekBar extends androidx.appcompat.widget.AppCompatSeekBar 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_UP:
-                Log.e("waddup", getStackTraceString(new Exception()));
                 task.run();
         }
 
         return true;
     }
 
-    private static String getStackTraceString(Exception e) {
+    public static String getStackTraceString(Exception e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
