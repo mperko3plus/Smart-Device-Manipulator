@@ -14,6 +14,8 @@ public class Photo {
 
     private long finger;
 
+    private String finger2;
+
     public long getId() {
         return id;
     }
@@ -44,5 +46,13 @@ public class Photo {
 
     public void setFinger(long finger) {
         this.finger = finger;
+    }
+
+    public String getFinger2() {
+        return finger2;
+    }
+
+    public void setFinger2(String finger2) {
+        this.finger2 = finger2;
     }
 }
