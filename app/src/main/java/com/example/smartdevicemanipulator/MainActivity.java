@@ -10,28 +10,18 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.smartdevicemanipulator.client.SystemWebDto;
 import com.example.smartdevicemanipulator.client.V3Client;
+import com.example.smartdevicemanipulator.service.DeviceService;
 
 import java.util.concurrent.CompletableFuture;
 
 public class MainActivity extends AppCompatActivity {
-    private final V3Client v3 = V3Client.v3;
+    private final DeviceService deviceService = new DeviceService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        CompletableFuture<Boolean> selectedSystem = CompletableFuture.supplyAsync(() -> {
-            SystemWebDto systemWebDto = v3.selectSystem();
-            return systemWebDto != null;
-        });
-        try {
-            Boolean success = selectedSystem.get();
-            if (!success) {
-                Log.e("System select exception", "Failed to select system");
-            }
-        } catch (Exception ex) {
-            Log.e("System select exception", ex.getMessage(), ex);
-        }
+        deviceService.selectSystem("c3ebc59c-a79a-497f-a54a-5f5db7e0143e");
 
         // Find buttons by their IDs
         Button button1 = findViewById(R.id.button1);

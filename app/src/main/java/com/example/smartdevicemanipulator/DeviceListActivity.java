@@ -13,9 +13,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.smartdevicemanipulator.client.Attribute;
+import com.example.smartdevicemanipulator.client.AttributeValueDto;
 import com.example.smartdevicemanipulator.client.DeviceDto;
-import com.example.smartdevicemanipulator.client.V3Client;
+import com.example.smartdevicemanipulator.client.DeviceTypeEnum;
 import com.example.smartdevicemanipulator.model.DeviceDtoParceable;
+import com.example.smartdevicemanipulator.service.DeviceService;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,12 +29,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class DeviceListActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 1001; // Use any unique integer value
-    private final V3Client v3 = V3Client.v3;
+    private final DeviceService deviceService = new DeviceService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +41,18 @@ public class DeviceListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_device_list);
 
         ArrayList<DeviceDto> deviceOptions = getDeviceOptions();
+
+        for (DeviceDto deviceOption : deviceOptions) {
+            DeviceDto deviceDto = deviceService.getDeviceByUuid(deviceOption.getUuid());
+            Log.i("deviceDto", deviceDto.toString());
+            if (deviceDto.getIcon().getName().equals(DeviceTypeEnum.ON_OFF_SWITCH)) {
+                deviceService.setOnOff(deviceOption.getUuid(), true);
+                Boolean onOff = deviceService.getOnOff(deviceOption.getUuid());
+                System.out.println(onOff);
+            }
+        }
+
+//        deviceService.setAttribute("efdeabd0-120f-4fa6-8376-30f0c9c6f9b6", new AttributeValueDto(System.currentTimeMillis() % 2 == 0 ? "false" : "true", null, null, null));
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, deviceOptions.stream().map(DeviceDto::getName).collect(Collectors.toList()));
 
@@ -60,14 +74,7 @@ public class DeviceListActivity extends AppCompatActivity {
 
 
     private ArrayList<DeviceDto> getDeviceOptions() {
-        CompletableFuture<ArrayList<DeviceDto>> future = CompletableFuture.supplyAsync(() -> {
-            return v3.getDevices().stream().filter(d -> d.getName() != null && !d.getName().trim().isEmpty()).collect(Collectors.toCollection(ArrayList::new));
-        });
-        try {
-            return future.get();
-        } catch (Exception ex) {
-            return new ArrayList<>();
-        }
+        return deviceService.getDevices().stream().filter(d -> d.getName() != null && !d.getName().trim().isEmpty()).collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Override
