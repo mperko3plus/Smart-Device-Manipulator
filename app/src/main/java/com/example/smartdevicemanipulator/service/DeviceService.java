@@ -138,10 +138,29 @@ public class DeviceService {
             Boolean writable = attribute.getDefinition().getWritable();
             if (attr != null && attributeType != null && cluster != null && writable != null && attr.equals("state") && attributeType.equals("BOOLEAN") && cluster.equals("com.zipato.cluster.OnOff") && writable) {
                 setAttribute(attribute.getUuid(), new AttributeValueDto(on ? "true" : "false", null, null, null));
+                setAttributeUpdatedAsync(attribute);
                 break;
             }
         }
-        fetchAndSetAttributesToDeviceAsync(deviceDto);
+//        fetchAndSetAttributesToDeviceAsync(deviceDto);
+    }
+
+    private void setAttributeUpdatedAsync(Attribute attribute) {
+        CompletableFuture<Boolean> success = CompletableFuture.supplyAsync(() -> {
+            Attribute attributeTemp = getAttribute(attribute.getUuid());
+            if (attributeTemp == null) {
+                return false;
+            }
+            attribute.setValue(attributeTemp.getValue());
+            return true;
+        });
+        try {
+            if (!success.get()) {
+                Log.e("Failed to set attribute async", "Attribute fail");
+            }
+        } catch (Exception ex) {
+            Log.e("Failed to set attribute async", ex.getMessage(), ex);
+        }
     }
 
     public boolean getOnOff(String deviceUuid, boolean fetchAttributes) {
@@ -186,10 +205,11 @@ public class DeviceService {
             Boolean writable = attribute.getDefinition().getWritable();
             if (attributeType != null && cluster != null && writable != null && attributeType.equals("NUMBER") && cluster.equals("com.zipato.cluster.LevelControl") && writable) {
                 setAttribute(attribute.getUuid(), new AttributeValueDto(String.valueOf(intensity), null, null, null));
+                setAttributeUpdatedAsync(attribute);
                 break;
             }
         }
-        fetchAndSetAttributesToDeviceAsync(deviceDto);
+//        fetchAndSetAttributesToDeviceAsync(deviceDto);
     }
 
     public RestObject synchronize() throws IOException, NoSuchAlgorithmException {
@@ -206,6 +226,27 @@ public class DeviceService {
         } catch (Exception ex) {
             Log.e("Something went wrong when fetching attributes", ex.getMessage(), ex);
             return new ArrayList<>();
+        }
+    }
+
+    private Attribute getAttribute(String attributeUuid) {
+        try {
+//            String response = v3.sendGetRequest("/zipato-web/v2/attributes/full?network=false&device=true&endpoint=false&clusterEndpoint=false&definition=true&config=true&room=false&icons=true&value=false&parent=false&children=false&full=false&type=false");
+            String response = v3.sendGetRequest("/zipato-web/v2/attributes/" + attributeUuid + "?full=true");
+            return mapper.readValue(response, Attribute.class);
+        } catch (Exception ex) {
+            Log.e("Something went wrong when fetching attributes", ex.getMessage(), ex);
+            return null;
+        }
+    }
+
+    private Attribute getAttributeAsync(String attributeUuid) {
+        CompletableFuture<Attribute> futureAttribute = CompletableFuture.supplyAsync(() -> getAttribute(attributeUuid));
+        try {
+            return futureAttribute.get();
+        } catch (Exception ex) {
+            Log.e("Something went wrong when fetching attribute with uuid:" + attributeUuid, "Failed to fetch attribute");
+            return null;
         }
     }
 
