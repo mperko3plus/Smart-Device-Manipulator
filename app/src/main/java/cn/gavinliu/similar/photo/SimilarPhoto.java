@@ -3,7 +3,7 @@ package cn.gavinliu.similar.photo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import com.example.smartdevicemanipulator.phash.PHash;
+import hr.triplus.smartdevicemanipulator.phash.PHash;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;

@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.smartdevicemanipulator'
+    namespace 'hr.triplus.smartdevicemanipulator'
     compileSdk 31
 
     defaultConfig {
-        applicationId "com.example.smartdevicemanipulator"
+        applicationId "hr.triplus.smartdevicemanipulator"
         minSdk 31
         targetSdk 33
         versionCode 1
