@@ -26,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.smartdevicemanipulator.client.DeviceDto;
+import com.example.smartdevicemanipulator.client.DeviceTypeEnum;
 import com.example.smartdevicemanipulator.service.DeviceService;
 
 import java.io.ByteArrayOutputStream;
@@ -70,7 +71,6 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private final DeviceService deviceService = DeviceService.INSTANCE;
     private byte[] previewBuffer;
     private TextureView textureView;
-    private TextView temperatureTextView;
     private long lastMatch = 0;
     private final ScheduledExecutorService attributeChecker = new ScheduledThreadPoolExecutor(1);
     private final ScheduledExecutorService touchedChecker = new ScheduledThreadPoolExecutor(1);
@@ -101,7 +101,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         this.temperatureTextView = new TextView(this);
         this.temperatureTextView.setTextSize(16);
         this.temperatureTextView.setTextColor(Color.WHITE);
-        this.temperatureTextView.setVisibility(View.INVISIBLE);
+//        this.temperatureTextView.setVisibility(View.INVISIBLE);
 
         // Add views to frame layout
         FrameLayout frameLayout = new FrameLayout(this);
@@ -189,21 +189,21 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private void initSchedulersAndListener() {
         this.touchedChecker.scheduleWithFixedDelay(() -> {
             this.taskExecutor.execute(this::handleResetViewIfUntouched);
-        }, 1, 2, TimeUnit.SECONDS);
+        }, 1, 1, TimeUnit.SECONDS);
         this.attributeChecker.scheduleWithFixedDelay(this::handleMatchedDeviceMatch, 1, 2, TimeUnit.SECONDS);
 
         this.verticalSeekBar.addBarListener(() -> {
             taskExecutor.execute(() -> {
-                if (getMatchedDevice() == null) {
+                if (getMatchedDevice() == null || getMatchedDevice().getIcon() != null && !getMatchedDevice().getIcon().getName().equals(DeviceTypeEnum.RGBW_BULB)) {
                     Log.e("Failed to set bulb attribute, matched device null", "Bulb attribute set failure, matched device null");
                     return;
                 }
                 int intensity = verticalSeekBar.getProgress();
                 deviceService.setIntensity(getMatchedDevice().getUuid(), intensity);
                 setMatchedDevice(deviceService.getDeviceByUuidAndUpdateAttributes(getMatchedDevice().getUuid()));
-                int newIntensity = deviceService.getIntensity(getMatchedDevice().getUuid(), false);
-                Log.i("waddup pg " + newIntensity, VerticalSeekBar.getStackTraceString(new Exception()));
-                runOnUiThread(() -> verticalSeekBar.setProgress(newIntensity));
+//                int newIntensity = deviceService.getIntensity(getMatchedDevice().getUuid(), false);
+//                Log.i("waddup pg " + newIntensity, VerticalSeekBar.getStackTraceString(new Exception()));
+//                runOnUiThread(() -> verticalSeekBar.setProgress(newIntensity));
             });
         });
 
@@ -215,7 +215,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
             if (bulbImageView != null && verticalSeekBar != null && temperatureTextView != null) {
                 bulbImageView.setVisibility(View.INVISIBLE);
                 verticalSeekBar.setVisibility(View.INVISIBLE);
-                temperatureTextView.setVisibility(View.INVISIBLE);
+//                temperatureTextView.setVisibility(View.INVISIBLE);
             }
         });
     }
@@ -349,7 +349,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
     public void handleMatchedDeviceMatch() {
         this.taskExecutor.execute(() -> {
-            if (getMatchedDevice() == null) {
+            if (getMatchedDevice() == null || !getMatchedDevice().getIcon().getName().equals(DeviceTypeEnum.DOOR)) {
                 return;
             }
             handleDeviceMatch(getMatchedDevice().getUuid(), false);
@@ -408,30 +408,24 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     }
 
     private void setTemperature(String deviceName, String deviceUuid) {
-        taskExecutor.execute(() -> {
-            double temperature = deviceService.getTemperature(deviceUuid, true);
-            runOnUiThread(() -> {
-                temperatureTextView.setText((deviceName != null ? deviceName : "Door window sensor") + " temperature is: " + temperature + " degrees");
-                temperatureTextView.setVisibility(View.VISIBLE);
-            });
+        double temperature = deviceService.getTemperature(deviceUuid, true);
+        runOnUiThread(() -> {
+//                temperatureTextView.setText((deviceName != null ? deviceName : "Door window sensor") + " temperature is: " + temperature + " degrees");
+//                temperatureTextView.setVisibility(View.VISIBLE);
         });
     }
 
     private void setIntensity(String deviceUuid) {
-        taskExecutor.execute(() -> {
-            int intensity = deviceService.getIntensity(deviceUuid, true);
-            runOnUiThread(() -> {
-                verticalSeekBar.setProgress(intensity);
-                verticalSeekBar.setVisibility(View.VISIBLE);
-            });
+        int intensity = deviceService.getIntensity(deviceUuid, true);
+        runOnUiThread(() -> {
+            verticalSeekBar.setProgress(intensity);
+            verticalSeekBar.setVisibility(View.VISIBLE);
         });
     }
 
     private void setOnOff(String deviceUuid) {
-        taskExecutor.execute(() -> {
-            this.isBulbOn = deviceService.getOnOff(deviceUuid, true);
-            runOnUiThread(this::toggleBulb);
-        });
+        this.isBulbOn = deviceService.getOnOff(deviceUuid, true);
+        runOnUiThread(this::toggleBulb);
     }
 
     private void toggleOnOff() {
