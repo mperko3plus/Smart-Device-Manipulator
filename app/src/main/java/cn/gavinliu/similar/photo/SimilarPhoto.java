@@ -2,13 +2,16 @@ package cn.gavinliu.similar.photo;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.util.Log;
+
+import androidx.appcompat.view.menu.MenuBuilder;
 
 import com.example.smartdevicemanipulator.phash.PHash;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 
 import cn.gavinliu.similar.photo.entry.Photo;
@@ -24,6 +27,7 @@ public class SimilarPhoto {
 
     public static MatchResult matches(List<Photo> refPhotos, Photo currentPhoto) {
 
+        List<MatchResult> results = new LinkedList<>();
         for (int i = 0; i < refPhotos.size(); i++) {
             Photo referencePhoto = refPhotos.get(i);
 
@@ -32,12 +36,13 @@ public class SimilarPhoto {
 
 //            int dist = hamDist(referencePhoto.getFinger(), currentPhoto.getFinger());
             int dist = PHash.getHammingDistance(referencePhoto.getFinger2(), currentPhoto.getFinger2());
-            if (dist <= 20) {
+            if (dist <= 15) {
                 String deviceUuid = Paths.get(referencePhoto.getPath()).getParent().getFileName().toString();
-                return new MatchResult(referencePhoto.getPath(), deviceUuid);
+                MatchResult matchResult = new MatchResult(referencePhoto.getPath(), deviceUuid, 100-dist);
+                results.add(matchResult);
             }
         }
-        return null;
+        return results.stream().max(Comparator.comparing(a -> a.similarity)).orElse(null);
     }
 
     public static void calculateFingerPrint(List<Photo> photos) {
@@ -164,9 +169,12 @@ public class SimilarPhoto {
         public final String path;
         public final String deviceUuid;
 
-        public MatchResult(String path, String deviceUuid) {
+        public final int similarity;
+
+        public MatchResult(String path, String deviceUuid, int similarity) {
             this.path = path;
             this.deviceUuid = deviceUuid;
+            this.similarity = similarity;
         }
     }
 }

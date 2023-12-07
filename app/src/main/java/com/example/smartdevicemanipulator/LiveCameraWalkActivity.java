@@ -51,6 +51,8 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private boolean isTouchInProgress = false;
     private static final long TOUCH_IGNORE_DURATION_MS = 500;
 
+    volatile TextView temperatureTextView;
+
     private List<Photo> photos;
 
     private final long IMAGE_ANALYSIS_INTERVAL_MS = 500;
@@ -80,7 +82,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         });
 
         // Create temperature TextView
-        TextView temperatureTextView = new TextView(this);
+        temperatureTextView = new TextView(this);
         temperatureTextView.setTextSize(16);
         temperatureTextView.setTextColor(Color.WHITE);
         temperatureTextView.setText("Temperature: 20°C");  // Initial hardcoded temperature
@@ -235,6 +237,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
             this.previewBuffer = new byte[prevWidth * prevHeight * ImageFormat.getBitsPerPixel(mCamera.getParameters().getPreviewFormat()) / 8];
             mCamera.addCallbackBuffer(previewBuffer);
+            lastAnalysisTimeMs.set(System.currentTimeMillis());
             mCamera.setPreviewCallbackWithBuffer(new Camera.PreviewCallback() {
                 @Override
                 public void onPreviewFrame(byte[] data, Camera camera) {
@@ -255,9 +258,16 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                             Photo photo = SimilarPhoto.calculateFingerPrint(bitmap);
                             SimilarPhoto.MatchResult match = SimilarPhoto.matches(photos, photo);
                             if (match != null) {
+                                runOnUiThread(() -> {
+                                    temperatureTextView.setText(match.deviceUuid);
+                                });
                                 Log.i(TAG, "matched frame to device! " + match.deviceUuid);
                             }
                         }).start();
+
+                        runOnUiThread(() -> {
+                            temperatureTextView.setText("no match");
+                        });
 
                         // Show/hide the overlay icon based on the condition
                         updateOverlayVisibility();
