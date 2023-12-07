@@ -226,7 +226,7 @@ public class DeviceService {
                 return Double.parseDouble(attribute.getValue() != null ? attribute.getValue().getValue() : "0");
             }
         }
-        throw new RuntimeException("Failed to fetch intensity state for device with uuid: " + deviceUuid);
+        throw new RuntimeException("Failed to fetch temperature for device with uuid: " + deviceUuid);
     }
 
     private AttributeValueDto fetchAttributeValueByUuidAsync(String attributeUuid) {
@@ -260,6 +260,22 @@ public class DeviceService {
             }
         }
 //        fetchAndSetAttributesToDeviceAsync(deviceDto);
+    }
+
+    public void setColor(String deviceUuid, String color) {
+        DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        List<Attribute> attributes = deviceDto.getAttributes();
+        for (Attribute attribute : attributes) {
+            String attributeType = attribute.getDefinition().getAttributeType();
+            String attributeName = attribute.getName();
+            String cluster = attribute.getDefinition().getCluster();
+            Boolean writable = attribute.getDefinition().getWritable();
+            if (attributeType != null && cluster != null && writable != null && attributeType.equals("STRING") && attributeName.equals("rgb") && writable) {
+                setAttribute(attribute.getUuid(), new AttributeValueDto(String.valueOf(color), null, null, null));
+                setAttributeUpdatedAsync(attribute);
+                break;
+            }
+        }
     }
 
     public RestObject synchronize() throws IOException, NoSuchAlgorithmException {
@@ -333,4 +349,5 @@ public class DeviceService {
             Log.e("Failed to set attribute", ex.getMessage(), ex);
         }
     }
+
 }

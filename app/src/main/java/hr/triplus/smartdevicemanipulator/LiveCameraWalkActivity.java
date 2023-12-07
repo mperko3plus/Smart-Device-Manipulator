@@ -20,16 +20,11 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import hr.triplus.smartdevicemanipulator.R;
-
-import hr.triplus.smartdevicemanipulator.client.DeviceDto;
-import hr.triplus.smartdevicemanipulator.client.DeviceTypeEnum;
-import hr.triplus.smartdevicemanipulator.service.DeviceService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,6 +39,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import cn.gavinliu.similar.photo.SimilarPhoto;
 import cn.gavinliu.similar.photo.entry.Photo;
 import cn.gavinliu.similar.photo.util.PhotoRepository;
+import hr.triplus.smartdevicemanipulator.client.DeviceDto;
+import hr.triplus.smartdevicemanipulator.client.DeviceTypeEnum;
+import hr.triplus.smartdevicemanipulator.service.DeviceService;
+import yuku.ambilwarna.AmbilWarnaDialog;
 
 /**
  * More or less straight out of TextureView's doc.
@@ -61,6 +60,8 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private VerticalSeekBar verticalSeekBar;
     private boolean conditionMet = true;
     private boolean isTouchInProgress = false;
+
+    private View mColorPreview;
     private static final long TOUCH_IGNORE_DURATION_MS = 500;
 
     volatile TextView temperatureTextView;
@@ -77,6 +78,8 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private final ScheduledExecutorService attributeChecker = new ScheduledThreadPoolExecutor(1);
     private final ScheduledExecutorService touchedChecker = new ScheduledThreadPoolExecutor(1);
     private final Executor taskExecutor = Executors.newSingleThreadExecutor();
+
+    private Button buttonColor;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -140,7 +143,6 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
         frameLayout.addView(verticalSeekBar, seekBarParams);
 
-
         bulbImageView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -172,6 +174,24 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                 return true;
             }
         });
+
+        buttonColor = new Button(this);
+        buttonColor.setVisibility(View.INVISIBLE);
+
+        FrameLayout.LayoutParams buttonParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        buttonParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        buttonParams.bottomMargin = 20;  // Adjust the bottom margin as needed
+        buttonColor.setLayoutParams(buttonParams);
+        buttonColor.setText("Change color");
+        buttonColor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String uuid = view.getTag().toString();
+                runColorPicker(uuid, 0);
+            }
+        });
+
+        frameLayout.addView(buttonColor);
 
         setContentView(frameLayout);  // Set the content view to the FrameLayout
 //        setContentView(textureView);
@@ -214,10 +234,11 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     public void resetView() {
         setMatchedDevice(null);
         runOnUiThread(() -> {
-            if (bulbImageView != null && verticalSeekBar != null && temperatureTextView != null) {
+            if (bulbImageView != null && verticalSeekBar != null && temperatureTextView != null && buttonColor != null) {
                 bulbImageView.setVisibility(View.INVISIBLE);
                 verticalSeekBar.setVisibility(View.INVISIBLE);
 //                temperatureTextView.setVisibility(View.INVISIBLE);
+                buttonColor.setVisibility(View.INVISIBLE);
             }
         });
     }
@@ -370,6 +391,11 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                 break;
             case RGBW_BULB:
                 setIntensity(deviceUuid);
+                runOnUiThread(() -> {
+                    buttonColor.setTag(deviceUuid);
+                    buttonColor.setVisibility(View.VISIBLE);
+                });
+
         }
     }
 
@@ -418,6 +444,12 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         });
     }
 
+    private void runColorPicker(String deviceUuid, int color) {
+        runOnUiThread(() -> {
+            openColorPickerDialogue(deviceUuid, color);
+        });
+    }
+
     private void setOnOff(String deviceUuid) {
         this.isBulbOn = deviceService.getOnOff(deviceUuid, true);
         runOnUiThread(this::toggleBulb);
@@ -463,4 +495,35 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     public void setLastMatch(long lastMatch) {
         this.lastMatch = lastMatch;
     }
+
+    public void openColorPickerDialogue(String deviceUuid, int color) {
+
+        // the AmbilWarnaDialog callback needs 3 parameters
+        // one is the context, second is default color,
+        final AmbilWarnaDialog colorPickerDialogue = new AmbilWarnaDialog(this, color,
+                new AmbilWarnaDialog.OnAmbilWarnaListener() {
+                    @Override
+                    public void onCancel(AmbilWarnaDialog dialog) {
+                        // leave this function body as
+                        // blank, as the dialog
+                        // automatically closes when
+                        // clicked on cancel button
+                    }
+
+                    @Override
+                    public void onOk(AmbilWarnaDialog dialog, int color) {
+                        // change the mDefaultColor to
+                        // change the GFG text color as
+                        // it is returned when the OK
+                        // button is clicked from the
+                        // color picker dialog
+
+                        // now change the picked color
+                        // preview box to mDefaultColor
+                        deviceService.setColor(deviceUuid, Integer.toHexString(color).substring(2, 8));
+                    }
+                });
+        colorPickerDialogue.show();
+    }
+
 }
