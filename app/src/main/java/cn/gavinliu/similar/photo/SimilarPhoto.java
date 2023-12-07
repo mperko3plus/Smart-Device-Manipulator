@@ -3,8 +3,6 @@ package cn.gavinliu.similar.photo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import hr.triplus.smartdevicemanipulator.phash.PHash;
-
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -12,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import cn.gavinliu.similar.photo.entry.Photo;
+import hr.triplus.smartdevicemanipulator.phash.PHash;
 
 /**
  * Created by gavin on 2017/3/27.
@@ -20,7 +19,6 @@ import cn.gavinliu.similar.photo.entry.Photo;
 public class SimilarPhoto {
 
     private static final String TAG = SimilarPhoto.class.getSimpleName();
-
 
     public static MatchResult matches(List<Photo> refPhotos, Photo currentPhoto) {
 
