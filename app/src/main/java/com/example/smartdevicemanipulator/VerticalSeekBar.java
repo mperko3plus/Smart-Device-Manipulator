@@ -3,10 +3,15 @@ package com.example.smartdevicemanipulator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.SeekBar;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 public class VerticalSeekBar extends androidx.appcompat.widget.AppCompatSeekBar {
+    private Runnable task;
 
     public VerticalSeekBar(Context context) {
         super(context);
@@ -24,12 +29,13 @@ public class VerticalSeekBar extends androidx.appcompat.widget.AppCompatSeekBar 
         super.onSizeChanged(h, w, oldh, oldw);
     }
 
-   @Override
-   public synchronized void setProgress(int progress)  // it is necessary for calling setProgress on click of a button
-   {
-    super.setProgress(progress);
-    onSizeChanged(getWidth(), getHeight(), 0, 0); 
-   }
+    @Override
+    public synchronized void setProgress(int progress)  // it is necessary for calling setProgress on click of a button
+    {
+        super.setProgress(progress);
+        onSizeChanged(getWidth(), getHeight(), 0, 0);
+    }
+
     @Override
     protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(heightMeasureSpec, widthMeasureSpec);
@@ -42,6 +48,11 @@ public class VerticalSeekBar extends androidx.appcompat.widget.AppCompatSeekBar 
 
         super.onDraw(c);
     }
+
+    public void addBarListener(Runnable task) {
+        this.task = task;
+    }
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -60,6 +71,21 @@ public class VerticalSeekBar extends androidx.appcompat.widget.AppCompatSeekBar 
             case MotionEvent.ACTION_CANCEL:
                 break;
         }
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_UP:
+                task.run();
+        }
+
         return true;
     }
+
+    public static String getStackTraceString(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return sw.toString();
+    }
+
 }

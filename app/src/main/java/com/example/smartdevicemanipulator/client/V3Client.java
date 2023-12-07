@@ -1,17 +1,18 @@
 package com.example.smartdevicemanipulator.client;
 
-import android.util.Log;
-
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import okhttp3.*;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
+
+import okhttp3.Call;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class V3Client {
     public static V3Client v3 = new V3Client();
@@ -30,70 +31,22 @@ public class V3Client {
         this.jSessionId = null;
     }
 
-    public SystemWebDto selectSystem() {
-        try {
-            String uuid = "c3ebc59c-a79a-497f-a54a-5f5db7e0143e";
-            String response = sendGetRequest("/zipato-web/v2/systems/select?uuid=" + uuid);
-            return mapper.readValue(response, SystemWebDto.class);
-        } catch (Exception ex) {
-            Log.e("Failed to select system", ex.getMessage(), ex);
-            return null;
-        }
-    }
-
-    public List<DeviceDto> getDevices() {
-        try {
-            String response = sendGetRequest("/zipato-web/v2/devices");
-            return mapper.readValue(response, new TypeReference<List<DeviceDto>>() {
-            });
-        } catch (Exception ex) {
-            return new ArrayList<>();
-        }
-    }
-
-    public RestObject synchronize() throws IOException, NoSuchAlgorithmException {
-        String response = sendGetRequest("/zipato-web/v2/box/synchronize?ifNeeded=false&wait=true&timeout=180&_dc=1701702072041");
-        return mapper.readValue(response, ResultRest.class);
-    }
-
-    public List<Attribute> getAttributes() throws IOException, NoSuchAlgorithmException {
-        String response = sendGetRequest("/zipato-web/v2/attributes/full?network=false&device=true&endpoint=false&clusterEndpoint=false&definition=true&config=true&room=false&icons=true&value=false&parent=false&children=false&full=false&type=false");
-        return mapper.readValue(response, new TypeReference<List<Attribute>>() {
-        });
-    }
-
-    public List<Attribute> getAttributeValues(boolean update) throws IOException, NoSuchAlgorithmException {
-        String response = sendGetRequest("/zipato-web/v2/attributes/values?update=" + update);
-        return mapper.readValue(response, new TypeReference<List<Attribute>>() {
-        });
-    }
-
-    public AttributeValueDto getAttributeValue(String attributeUuid) throws IOException, NoSuchAlgorithmException {
-        String response = sendGetRequest("/zipato-web/v2/attributes/" + attributeUuid + "/value");
-        return mapper.readValue(response, AttributeValueDto.class);
-    }
-
-    public void setAttribute(String attributeUuid, AttributeValueDto attributeValue) throws IOException, NoSuchAlgorithmException {
-        String body = mapper.writeValueAsString(attributeValue);
-        sendPutRequest("/zipato-web/v2/attributes/" + attributeUuid + "/value", body);
-    }
-
 
     // Helper methods
 
-    private String sendPostRequest(String uri, String request) throws IOException, NoSuchAlgorithmException {
+    public String sendPostRequest(String uri, String request) throws IOException, NoSuchAlgorithmException {
         return sendRequest(uri, "POST", request);
     }
 
-    private String sendPutRequest(String uri, String request) throws IOException, NoSuchAlgorithmException {
+    public String sendPutRequest(String uri, String request) throws IOException, NoSuchAlgorithmException {
         return sendRequest(uri, "PUT", request);
     }
 
-    private String sendGetRequest(String uri, String request) throws IOException, NoSuchAlgorithmException {
+    public String sendGetRequest(String uri, String request) throws IOException, NoSuchAlgorithmException {
         return sendRequest(uri, "GET", request);
     }
 
-    private String sendGetRequest(String uri) throws IOException, NoSuchAlgorithmException {
+    public String sendGetRequest(String uri) throws IOException, NoSuchAlgorithmException {
         return sendRequest(uri, "GET", null);
     }
 

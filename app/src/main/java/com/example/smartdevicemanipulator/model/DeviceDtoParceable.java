@@ -42,7 +42,7 @@ public class DeviceDtoParceable implements Parcelable {
     }
 
     public static DeviceDto toDto(DeviceDtoParceable parceable) {
-        return new DeviceDto(parceable.name, null, parceable.uuid);
+        return new DeviceDto(parceable.name, null, parceable.uuid, null, null, null, null, null, null, null);
     }
 
     public static DeviceDtoParceable fromDto(DeviceDto deviceDto) {
