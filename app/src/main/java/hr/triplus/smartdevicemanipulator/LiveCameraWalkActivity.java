@@ -25,12 +25,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import hr.triplus.smartdevicemanipulator.R;
-
-import hr.triplus.smartdevicemanipulator.client.DeviceDto;
-import hr.triplus.smartdevicemanipulator.client.DeviceTypeEnum;
-import hr.triplus.smartdevicemanipulator.service.DeviceService;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -44,6 +38,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import cn.gavinliu.similar.photo.SimilarPhoto;
 import cn.gavinliu.similar.photo.entry.Photo;
 import cn.gavinliu.similar.photo.util.PhotoRepository;
+import hr.triplus.smartdevicemanipulator.client.DeviceDto;
+import hr.triplus.smartdevicemanipulator.client.DeviceTypeEnum;
+import hr.triplus.smartdevicemanipulator.service.DeviceService;
 
 /**
  * More or less straight out of TextureView's doc.
@@ -441,9 +438,9 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
     private void toggleBulb() {
         if (isBulbOn) {
-            bulbImageView.setImageResource(R.drawable.lightbulbsolid); // Change to your bulb on icon
+            bulbImageView.setImageResource(R.drawable.lightbulb_on48); // Change to your bulb on icon
         } else {
-            bulbImageView.setImageResource(R.drawable.lightbulbregular); // Change to your bulb off icon
+            bulbImageView.setImageResource(R.drawable.lightbulb_off48); // Change to your bulb off icon
         }
         bulbImageView.setVisibility(View.VISIBLE);
     }
