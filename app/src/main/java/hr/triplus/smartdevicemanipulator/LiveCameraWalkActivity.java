@@ -570,7 +570,9 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
                         // now change the picked color
                         // preview box to mDefaultColor
-                        deviceService.setColor(deviceUuid, Integer.toHexString(color).substring(2, 8));
+                        taskExecutor.execute(() -> {
+                            deviceService.setColor(deviceUuid, Integer.toHexString(color).substring(2, 8));
+                        });
                     }
                 });
         colorPickerDialogue.show();
