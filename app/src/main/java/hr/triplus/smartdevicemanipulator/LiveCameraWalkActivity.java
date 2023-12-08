@@ -61,6 +61,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private static final long TOUCH_IGNORE_DURATION_MS = 500;
 
     volatile TextView temperatureTextView;
+    volatile TextView UUIDTextView;
 
     private List<Photo> photos;
     private DeviceDto matchedDevice;
@@ -105,6 +106,21 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         // Add views to frame layout
         FrameLayout frameLayout = new FrameLayout(this);
         frameLayout.addView(textureView, 0);
+
+
+        this.UUIDTextView = new TextView(this);
+        this.UUIDTextView.setTextSize(16);
+        this.UUIDTextView.setTextColor(Color.WHITE);
+        FrameLayout.LayoutParams deviceNameParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        deviceNameParams.gravity = Gravity.TOP | Gravity.LEFT;
+        deviceNameParams.topMargin = 20;
+        deviceNameParams.leftMargin = 20;
+
+        this.UUIDTextView.setLayoutParams(deviceNameParams);
+        this.UUIDTextView.setVisibility(View.INVISIBLE);
+        frameLayout.addView(this.UUIDTextView);
+
+
 
         // Set layout parameters for the bulbImageView (bottom and centered)
         FrameLayout.LayoutParams bulbParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
