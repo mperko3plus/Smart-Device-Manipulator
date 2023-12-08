@@ -183,6 +183,9 @@ public class DeviceService {
             if (attributeType != null && attributeName != null && attributeType.equals("BOOLEAN") && attributeName.equals("STATE")) {
                 if (fetchAttribute) {
                     AttributeValueDto attributeValueDto = fetchAttributeValueByUuidAsync(attribute.getUuid());
+                    if (attributeValueDto != null) {
+                        Log.i("Attribute", attributeValueDto.getValue());
+                    }
                     attribute.setValue(attributeValueDto);
                 }
                 return Boolean.parseBoolean(attribute.getValue().getValue());

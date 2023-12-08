@@ -25,6 +25,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import hr.triplus.smartdevicemanipulator.R;
+
+import hr.triplus.smartdevicemanipulator.client.DeviceDto;
+import hr.triplus.smartdevicemanipulator.client.DeviceTypeEnum;
+import hr.triplus.smartdevicemanipulator.client.IconDto;
+import hr.triplus.smartdevicemanipulator.service.DeviceService;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -334,7 +341,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                             if (match != null) {
                                 Log.i(TAG, "matched frame to device! " + match.deviceUuid);
                                 String deviceUuid = match.deviceUuid;
-                                taskExecutor.execute(() -> handleDeviceMatch(deviceUuid, true));
+                                taskExecutor.execute(() -> handleDeviceMatch(deviceUuid, true, false));
                             }
                         }).start();
 
@@ -357,27 +364,54 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
     public void handleMatchedDeviceMatch() {
         this.taskExecutor.execute(() -> {
-            if (getMatchedDevice() == null || !getMatchedDevice().getIcon().getName().equals(DeviceTypeEnum.DOOR)) {
+            DeviceDto matchedDevice = getMatchedDevice();
+            if (matchedDevice == null) {
+                Log.e("Device problem", "Matched device null");
                 return;
             }
-            handleDeviceMatch(getMatchedDevice().getUuid(), false);
+            IconDto icon = matchedDevice.getIcon();
+            if (icon == null) {
+                Log.e("Icon problem", "Icon null for device with uuid: " + matchedDevice.getUuid());
+                return;
+            }
+            DeviceTypeEnum iconName = icon.getName();
+            if (!iconName.equals(DeviceTypeEnum.DOOR) && !iconName.equals(DeviceTypeEnum.MOTION_SENSOR)) {
+                Log.i("Return type", "Not updating attribute, invalid icon type: " + iconName + " for device with uuid: " + matchedDevice.getUuid());
+                return;
+            }
+            handleDeviceMatch(getMatchedDevice().getUuid(), false, true);
         });
     }
 
-    public void handleDeviceMatch(String deviceUuid, boolean updateLastMatch) {
+    public void handleDeviceMatch(String deviceUuid, boolean updateLastMatch, boolean refreshAttributes) {
+        Log.i("Device attribute update", "Updating attribute for device with uuid: " + deviceUuid);
+        DeviceDto device = deviceService.getDeviceByUuid(deviceUuid);
+        if (getMatchedDevice() != null && getMatchedDevice().getUuid().equals(device.getUuid())) {
+            if (refreshAttributes) {
+                refreshAttributes(deviceUuid);
+            }
+            if (updateLastMatch) {
+                setLastMatch(System.currentTimeMillis());
+            }
+            return;
+        }
+        resetView();
+        setMatchedDevice(device);
         if (updateLastMatch) {
             setLastMatch(System.currentTimeMillis());
         }
-        DeviceDto device = deviceService.getDeviceByUuid(deviceUuid);
-        if (getMatchedDevice() != null && !getMatchedDevice().getUuid().equals(device.getUuid())) {
-            resetView();
-        }
-        setMatchedDevice(device);
+        refreshAttributes(deviceUuid);
+    }
+
+    private void refreshAttributes(String deviceUuid) {
         switch (getMatchedDevice().getIcon().getName()) {
             case DOOR:
-                setTemperature(getMatchedDevice().getName(), deviceUuid);
+//                setTemperature(getMatchedDevice().getName(), deviceUuid);
                 setOnOff(deviceUuid);
                 break;
+            case MOTION_SENSOR:
+//                setTemperature(getMatchedDevice().getName(), deviceUuid);
+                setOnOff(deviceUuid);
             case ON_OFF_SWITCH:
                 setOnOff(deviceUuid);
                 break;
