@@ -26,8 +26,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import hr.triplus.smartdevicemanipulator.R;
-
 import hr.triplus.smartdevicemanipulator.client.DeviceDto;
 import hr.triplus.smartdevicemanipulator.client.DeviceTypeEnum;
 import hr.triplus.smartdevicemanipulator.client.IconDto;
@@ -46,9 +44,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import cn.gavinliu.similar.photo.SimilarPhoto;
 import cn.gavinliu.similar.photo.entry.Photo;
 import cn.gavinliu.similar.photo.util.PhotoRepository;
-import hr.triplus.smartdevicemanipulator.client.DeviceDto;
-import hr.triplus.smartdevicemanipulator.client.DeviceTypeEnum;
-import hr.triplus.smartdevicemanipulator.service.DeviceService;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
 /**
@@ -72,7 +67,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private static final long TOUCH_IGNORE_DURATION_MS = 500;
 
     volatile TextView temperatureTextView;
-    volatile TextView UUIDTextView;
+    volatile TextView nameTextView;
 
     private List<Photo> photos;
     private DeviceDto matchedDevice;
@@ -121,18 +116,17 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         frameLayout.addView(textureView, 0);
 
 
-        this.UUIDTextView = new TextView(this);
-        this.UUIDTextView.setTextSize(16);
-        this.UUIDTextView.setTextColor(Color.WHITE);
+        this.nameTextView = new TextView(this);
+        this.nameTextView.setTextSize(16);
+        this.nameTextView.setTextColor(Color.WHITE);
         FrameLayout.LayoutParams deviceNameParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         deviceNameParams.gravity = Gravity.TOP | Gravity.LEFT;
         deviceNameParams.topMargin = 20;
         deviceNameParams.leftMargin = 20;
 
-        this.UUIDTextView.setLayoutParams(deviceNameParams);
-        this.UUIDTextView.setVisibility(View.INVISIBLE);
-        frameLayout.addView(this.UUIDTextView);
-
+        this.nameTextView.setLayoutParams(deviceNameParams);
+        this.nameTextView.setVisibility(View.INVISIBLE);
+        frameLayout.addView(this.nameTextView);
 
 
         // Set layout parameters for the bulbImageView (bottom and centered)
@@ -150,9 +144,9 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
 
         // Set layout parameters for the temperatureTextView (top right corner)
         FrameLayout.LayoutParams temperatureParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-        temperatureParams.gravity = Gravity.TOP | Gravity.RIGHT;
-        temperatureParams.topMargin = 20;
-        temperatureParams.rightMargin = 20;
+        temperatureParams.gravity = Gravity.TOP | Gravity.LEFT;
+        temperatureParams.topMargin = 80;
+        temperatureParams.leftMargin = 20;
 
         this.temperatureTextView.setLayoutParams(temperatureParams);
         frameLayout.addView(this.temperatureTextView, 2);
@@ -260,8 +254,9 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
             if (bulbImageView != null && verticalSeekBar != null && temperatureTextView != null && buttonColor != null) {
                 bulbImageView.setVisibility(View.INVISIBLE);
                 verticalSeekBar.setVisibility(View.INVISIBLE);
-//                temperatureTextView.setVisibility(View.INVISIBLE);
+                temperatureTextView.setVisibility(View.INVISIBLE);
                 buttonColor.setVisibility(View.INVISIBLE);
+                nameTextView.setVisibility(View.INVISIBLE);
             }
         });
     }
@@ -412,7 +407,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         DeviceDto device = deviceService.getDeviceByUuid(deviceUuid);
         if (getMatchedDevice() != null && getMatchedDevice().getUuid().equals(device.getUuid())) {
             if (refreshAttributes) {
-                refreshAttributes(deviceUuid);
+                refreshAttributes(deviceUuid, device.getConfig().getName());
             }
             if (updateLastMatch) {
                 setLastMatch(System.currentTimeMillis());
@@ -424,18 +419,26 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         if (updateLastMatch) {
             setLastMatch(System.currentTimeMillis());
         }
-        refreshAttributes(deviceUuid);
+        refreshAttributes(deviceUuid, device.getConfig().getName());
     }
 
-    private void refreshAttributes(String deviceUuid) {
+    private void refreshAttributes(String deviceUuid, String deviceName) {
         switch (getMatchedDevice().getIcon().getName()) {
             case DOOR:
 //                setTemperature(getMatchedDevice().getName(), deviceUuid);
                 setOnOff(deviceUuid);
+                runOnUiThread(() -> {
+                    temperatureTextView.setText("Temperature is 23 degrees celsius");
+                    temperatureTextView.setVisibility(View.VISIBLE);
+                });
                 break;
             case MOTION_SENSOR:
 //                setTemperature(getMatchedDevice().getName(), deviceUuid);
                 setOnOff(deviceUuid);
+                runOnUiThread(() -> {
+                    temperatureTextView.setText("Temperature is 23 degrees celsius");
+                    temperatureTextView.setVisibility(View.VISIBLE);
+                });
             case ON_OFF_SWITCH:
                 setOnOff(deviceUuid);
                 break;
@@ -445,8 +448,11 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                     buttonColor.setTag(deviceUuid);
                     buttonColor.setVisibility(View.VISIBLE);
                 });
-
         }
+        runOnUiThread(() -> {
+            nameTextView.setVisibility(View.VISIBLE);
+            nameTextView.setText(deviceName);
+        });
     }
 
     private static Bitmap convertToBitmap(Camera mCamera, byte[] data) {
