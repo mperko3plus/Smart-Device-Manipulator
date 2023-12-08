@@ -194,6 +194,26 @@ public class DeviceService {
         throw new RuntimeException("Failed to fetch on/off state for device with uuid: " + deviceUuid);
     }
 
+    public boolean getRgb(String deviceUuid, boolean fetchAttribute) {
+        DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        List<Attribute> attributes = deviceDto.getAttributes();
+        for (Attribute attribute : attributes) {
+            String attributeName = attribute.getName();
+            String attributeType = attribute.getDefinition().getAttributeType();
+            if (attributeType != null && attributeName != null && attributeType.equals("STRING") && attributeName.equals("rgb")) {
+                if (fetchAttribute) {
+                    AttributeValueDto attributeValueDto = fetchAttributeValueByUuidAsync(attribute.getUuid());
+                    if (attributeValueDto != null) {
+                        Log.i("Attribute", attributeValueDto.getValue());
+                    }
+                    attribute.setValue(attributeValueDto);
+                }
+                return Boolean.parseBoolean(attribute.getValue().getValue());
+            }
+        }
+        throw new RuntimeException("Failed to fetch on/off state for device with uuid: " + deviceUuid);
+    }
+
     public int getIntensity(String deviceUuid, boolean fetchAttribute) {
         DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
         if (fetchAttribute) {
@@ -258,6 +278,23 @@ public class DeviceService {
             Boolean writable = attribute.getDefinition().getWritable();
             if (attributeType != null && cluster != null && writable != null && attributeType.equals("NUMBER") && cluster.equals("com.zipato.cluster.LevelControl") && writable) {
                 setAttribute(attribute.getUuid(), new AttributeValueDto(String.valueOf(intensity), null, null, null));
+                setAttributeUpdatedAsync(attribute);
+                break;
+            }
+        }
+//        fetchAndSetAttributesToDeviceAsync(deviceDto);
+    }
+
+    public void setRgb(String deviceUuid, String rgb) {
+        DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        List<Attribute> attributes = deviceDto.getAttributes();
+        for (Attribute attribute : attributes) {
+            String attributeType = attribute.getDefinition().getAttributeType();
+            String attributeName = attribute.getName();
+            String cluster = attribute.getDefinition().getCluster();
+            Boolean writable = attribute.getDefinition().getWritable();
+            if (attributeType != null && attributeName != null && cluster != null && writable != null && attributeType.equals("STRING") && writable && attributeName.equals("rgb")) {
+                setAttribute(attribute.getUuid(), new AttributeValueDto(String.valueOf(rgb), null, null, null));
                 setAttributeUpdatedAsync(attribute);
                 break;
             }

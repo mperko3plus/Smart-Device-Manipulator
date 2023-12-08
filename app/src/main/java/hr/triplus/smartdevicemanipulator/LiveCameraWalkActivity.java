@@ -417,6 +417,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                 break;
             case RGBW_BULB:
                 setIntensity(deviceUuid);
+
         }
     }
 
