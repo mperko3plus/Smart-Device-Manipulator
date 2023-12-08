@@ -34,6 +34,7 @@ import hr.triplus.smartdevicemanipulator.service.DeviceService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -67,6 +68,10 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private static final long TOUCH_IGNORE_DURATION_MS = 500;
 
     volatile TextView temperatureTextView;
+
+    volatile TextView currentConsumptionTextView;
+
+    volatile TextView cumulativeConsumptionTextView;
     volatile TextView nameTextView;
 
     private List<Photo> photos;
@@ -101,6 +106,11 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         bulbImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                DeviceDto matchedDevice1 = getMatchedDevice();
+                if (matchedDevice1 != null && matchedDevice1.getIcon().getName().equals(DeviceTypeEnum.SWITCH_WITH_METER)) {
+                    toggleOnOffAndFetchConsumption();
+                    return;
+                }
                 toggleOnOff();
             }
         });
@@ -109,7 +119,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         this.temperatureTextView = new TextView(this);
         this.temperatureTextView.setTextSize(16);
         this.temperatureTextView.setTextColor(Color.WHITE);
-//        this.temperatureTextView.setVisibility(View.INVISIBLE);
+        this.temperatureTextView.setVisibility(View.INVISIBLE);
 
         // Add views to frame layout
         FrameLayout frameLayout = new FrameLayout(this);
@@ -127,6 +137,32 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         this.nameTextView.setLayoutParams(deviceNameParams);
         this.nameTextView.setVisibility(View.INVISIBLE);
         frameLayout.addView(this.nameTextView);
+
+
+        this.currentConsumptionTextView = new TextView(this);
+        this.currentConsumptionTextView.setTextSize(16);
+        this.currentConsumptionTextView.setTextColor(Color.WHITE);
+        FrameLayout.LayoutParams currentConsumptionTextParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        currentConsumptionTextParams.gravity = Gravity.TOP | Gravity.LEFT;
+        currentConsumptionTextParams.topMargin = 80;
+        currentConsumptionTextParams.leftMargin = 20;
+
+        this.currentConsumptionTextView.setLayoutParams(currentConsumptionTextParams);
+        this.currentConsumptionTextView.setVisibility(View.INVISIBLE);
+        frameLayout.addView(this.currentConsumptionTextView);
+
+
+        this.cumulativeConsumptionTextView = new TextView(this);
+        this.cumulativeConsumptionTextView.setTextSize(16);
+        this.cumulativeConsumptionTextView.setTextColor(Color.WHITE);
+        FrameLayout.LayoutParams cumulativeConsumptionTextParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        cumulativeConsumptionTextParams.gravity = Gravity.TOP | Gravity.LEFT;
+        cumulativeConsumptionTextParams.topMargin = 140;
+        cumulativeConsumptionTextParams.leftMargin = 20;
+
+        this.cumulativeConsumptionTextView.setLayoutParams(cumulativeConsumptionTextParams);
+        this.cumulativeConsumptionTextView.setVisibility(View.INVISIBLE);
+        frameLayout.addView(this.cumulativeConsumptionTextView);
 
 
         // Set layout parameters for the bulbImageView (bottom and centered)
@@ -177,7 +213,12 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                 float y = event.getRawY();
 
                 if (x >= bulbCoords[0] && x <= bulbCoords[0] + bulbImageView.getWidth() && y >= bulbCoords[1] && y <= bulbCoords[1] + bulbImageView.getHeight()) {
-                    toggleOnOff();
+                    DeviceDto matchedDevice1 = getMatchedDevice();
+                    if (matchedDevice1 != null && matchedDevice1.getIcon().getName().equals(DeviceTypeEnum.SWITCH_WITH_METER)) {
+                        toggleOnOffAndFetchConsumption();
+                    } else {
+                        toggleOnOff();
+                    }
                 }
 
                 // Reset flag
@@ -229,7 +270,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         this.touchedChecker.scheduleWithFixedDelay(() -> {
             this.taskExecutor.execute(this::handleResetViewIfUntouched);
         }, 1, 1, TimeUnit.SECONDS);
-        this.attributeChecker.scheduleWithFixedDelay(this::handleMatchedDeviceMatch, 1, 2, TimeUnit.SECONDS);
+        this.attributeChecker.scheduleWithFixedDelay(this::handleMatchedDeviceMatch, 1, 1, TimeUnit.SECONDS);
 
         this.verticalSeekBar.addBarListener(() -> {
             taskExecutor.execute(() -> {
@@ -257,6 +298,8 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                 temperatureTextView.setVisibility(View.INVISIBLE);
                 buttonColor.setVisibility(View.INVISIBLE);
                 nameTextView.setVisibility(View.INVISIBLE);
+                cumulativeConsumptionTextView.setVisibility(View.INVISIBLE);
+                currentConsumptionTextView.setVisibility(View.INVISIBLE);
             }
         });
     }
@@ -394,6 +437,16 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                 return;
             }
             DeviceTypeEnum iconName = icon.getName();
+            if (iconName.equals(DeviceTypeEnum.SWITCH_WITH_METER)) {
+                String currentConsumption = deviceService.getCurrentConsumption(getMatchedDevice().getUuid(), true);
+                String cumulativeConsumption = deviceService.getCumulativeConsumption(getMatchedDevice().getUuid(), true);
+                runOnUiThread(() -> {
+                    toggleBulb();
+                    currentConsumptionTextView.setText("Current consumption: " + currentConsumption + "kWh");
+                    cumulativeConsumptionTextView.setText("Cumulative consumption: " + cumulativeConsumption + "kWh");
+                });
+                return;
+            }
             if (!iconName.equals(DeviceTypeEnum.DOOR) && !iconName.equals(DeviceTypeEnum.MOTION_SENSOR)) {
                 Log.i("Return type", "Not updating attribute, invalid icon type: " + iconName + " for device with uuid: " + matchedDevice.getUuid());
                 return;
@@ -425,13 +478,6 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private void refreshAttributes(String deviceUuid, String deviceName) {
         switch (getMatchedDevice().getIcon().getName()) {
             case DOOR:
-//                setTemperature(getMatchedDevice().getName(), deviceUuid);
-                setOnOff(deviceUuid);
-                runOnUiThread(() -> {
-                    temperatureTextView.setText("Temperature is 23 degrees celsius");
-                    temperatureTextView.setVisibility(View.VISIBLE);
-                });
-                break;
             case MOTION_SENSOR:
 //                setTemperature(getMatchedDevice().getName(), deviceUuid);
                 setOnOff(deviceUuid);
@@ -439,6 +485,7 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                     temperatureTextView.setText("Temperature is 23 degrees celsius");
                     temperatureTextView.setVisibility(View.VISIBLE);
                 });
+                break;
             case ON_OFF_SWITCH:
                 setOnOff(deviceUuid);
                 break;
@@ -448,6 +495,12 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
                     buttonColor.setTag(deviceUuid);
                     buttonColor.setVisibility(View.VISIBLE);
                 });
+                break;
+            case SWITCH_WITH_METER:
+                setOnOff(deviceUuid);
+                setCurrentConsumption(deviceUuid);
+                setCumulativeConsumption(deviceUuid);
+
         }
         runOnUiThread(() -> {
             nameTextView.setVisibility(View.VISIBLE);
@@ -500,6 +553,22 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
         });
     }
 
+    private void setCurrentConsumption(String deviceUuid) {
+        String currentConsumption = deviceService.getCurrentConsumption(deviceUuid, true);
+        runOnUiThread(() -> {
+            currentConsumptionTextView.setVisibility(View.VISIBLE);
+            currentConsumptionTextView.setText("Current consumption: " + currentConsumption + "kWh");
+        });
+    }
+
+    private void setCumulativeConsumption(String deviceUuid) {
+        String cumulativeConsumption = deviceService.getCumulativeConsumption(deviceUuid, true);
+        runOnUiThread(() -> {
+            cumulativeConsumptionTextView.setVisibility(View.VISIBLE);
+            cumulativeConsumptionTextView.setText("Cumulative consumption: " + cumulativeConsumption + "kWh");
+        });
+    }
+
     private void runColorPicker(String deviceUuid, int color) {
         runOnUiThread(() -> {
             openColorPickerDialogue(deviceUuid, color);
@@ -509,6 +578,20 @@ public class LiveCameraWalkActivity extends Activity implements TextureView.Surf
     private void setOnOff(String deviceUuid) {
         this.isBulbOn = deviceService.getOnOff(deviceUuid, true);
         runOnUiThread(this::toggleBulb);
+    }
+
+    private void toggleOnOffAndFetchConsumption() {
+        taskExecutor.execute(() -> {
+            if (getMatchedDevice() == null) {
+                Log.e("Failed to set bulb attribute, matched device null", "Bulb attribute set failure, matched device null");
+                return;
+            }
+            if (!deviceService.setOnOff(getMatchedDevice().getUuid(), !isBulbOn)) {
+                Log.e("Failed to set bulb attribute", "Bulb attribute set failure");
+            }
+            isBulbOn = !isBulbOn;
+            runOnUiThread(this::toggleBulb);
+        });
     }
 
     private void toggleOnOff() {

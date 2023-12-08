@@ -235,6 +235,45 @@ public class DeviceService {
         throw new RuntimeException("Failed to fetch intensity state for device with uuid: " + deviceUuid);
     }
 
+    public String getCumulativeConsumption(String deviceUuid, boolean fetchAttribute) {
+        DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        if (fetchAttribute) {
+            fetchAndSetAttributesToDeviceAsync(deviceDto);
+        }
+        List<Attribute> attributes = deviceDto.getAttributes();
+        for (Attribute attribute : attributes) {
+            String attributeName = attribute.getName();
+            String attributeType = attribute.getDefinition().getAttributeType();
+            if (attributeType != null && attributeName != null && attributeType.equals("DOUBLE") && attributeName.equals("CUMULATIVE_CONSUMPTION")) {
+                if (fetchAttribute) {
+                    AttributeValueDto attributeValueDto = fetchAttributeValueByUuidAsync(attribute.getUuid());
+                    attribute.setValue(attributeValueDto);
+                }
+                return attribute.getValue().getValue();
+            }
+        }
+        throw new RuntimeException("Failed to fetch intensity state for device with uuid: " + deviceUuid);
+    }
+    public String getCurrentConsumption(String deviceUuid, boolean fetchAttribute) {
+        DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
+        if (fetchAttribute) {
+            fetchAndSetAttributesToDeviceAsync(deviceDto);
+        }
+        List<Attribute> attributes = deviceDto.getAttributes();
+        for (Attribute attribute : attributes) {
+            String attributeName = attribute.getName();
+            String attributeType = attribute.getDefinition().getAttributeType();
+            if (attributeType != null && attributeName != null && attributeType.equals("DOUBLE") && attributeName.equals("CURRENT_CONSUMPTION")) {
+                if (fetchAttribute) {
+                    AttributeValueDto attributeValueDto = fetchAttributeValueByUuidAsync(attribute.getUuid());
+                    attribute.setValue(attributeValueDto);
+                }
+                return attribute.getValue().getValue();
+            }
+        }
+        throw new RuntimeException("Failed to fetch intensity state for device with uuid: " + deviceUuid);
+    }
+
     public double getTemperature(String deviceUuid, boolean fetchAttribute) {
         DeviceDto deviceDto = getDeviceByUuid(deviceUuid);
         List<Attribute> attributes = deviceDto.getAttributes();
